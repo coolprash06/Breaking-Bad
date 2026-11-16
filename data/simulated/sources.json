@@ -1,0 +1,434 @@
+{
+  "id": "sources",
+  "provenance": "SIMULATED",
+  "title": "Water sources",
+  "source": "Seeded generator (src/lib/sim/specs.ts)",
+  "note": "18 sources across Thar and Kutch. Locations are illustrative placeholders.",
+  "data": [
+    {
+      "id": "TH-01",
+      "name": "Nadi #1",
+      "type": "nadi",
+      "region": "thar",
+      "district": "jaisalmer",
+      "placeLabel": "Village pond west of Jaisalmer",
+      "illustrativeLocation": true,
+      "lat": 26.95,
+      "lon": 70.8,
+      "capacityM": 2.5,
+      "failureLevelM": 0.3,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 60,
+        "animals": 400,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "TH-02",
+      "name": "Tanka #2",
+      "type": "tanka",
+      "region": "thar",
+      "district": "jaisalmer",
+      "placeLabel": "Household tanka cluster, Jaisalmer",
+      "illustrativeLocation": true,
+      "lat": 26.85,
+      "lon": 70.98,
+      "capacityM": 3,
+      "failureLevelM": 0.15,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 12,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "TH-03",
+      "name": "Beri #3",
+      "type": "beri_virda",
+      "region": "thar",
+      "district": "jaisalmer",
+      "placeLabel": "Beri pits, north-west of Jaisalmer",
+      "illustrativeLocation": true,
+      "lat": 27.02,
+      "lon": 70.7,
+      "capacityM": 1.2,
+      "failureLevelM": 0.15,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 10,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "TH-04",
+      "name": "Well #4",
+      "type": "dug_well",
+      "region": "thar",
+      "district": "barmer",
+      "placeLabel": "Village well near Barmer",
+      "illustrativeLocation": true,
+      "lat": 25.8,
+      "lon": 71.3,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot",
+        "pump"
+      ],
+      "people": {
+        "households": 120,
+        "animals": 80,
+        "farms": 2
+      },
+      "observationWell": true
+    },
+    {
+      "id": "TH-05",
+      "name": "Borewell #5",
+      "type": "borewell",
+      "region": "thar",
+      "district": "barmer",
+      "placeLabel": "Farm borewell south-east of Barmer",
+      "illustrativeLocation": true,
+      "lat": 25.7,
+      "lon": 71.45,
+      "capacityM": 30,
+      "failureLevelM": 1,
+      "animalCapable": false,
+      "usedBy": [
+        "pump"
+      ],
+      "people": {
+        "households": 0,
+        "animals": 0,
+        "farms": 4
+      },
+      "observationWell": true
+    },
+    {
+      "id": "TH-06",
+      "name": "Stepwell #6",
+      "type": "stepwell",
+      "region": "thar",
+      "district": "phalodi",
+      "placeLabel": "Old stepwell, Phalodi",
+      "illustrativeLocation": true,
+      "lat": 27.13,
+      "lon": 72.37,
+      "capacityM": 12,
+      "failureLevelM": 0.6,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 40,
+        "animals": 150,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "TH-07",
+      "name": "Well #7",
+      "type": "dug_well",
+      "region": "thar",
+      "district": "barmer",
+      "placeLabel": "Second village well near Barmer",
+      "illustrativeLocation": true,
+      "lat": 25.815,
+      "lon": 71.315,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 90,
+        "animals": 60,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "TH-08",
+      "name": "Tubewell #8",
+      "type": "borewell",
+      "region": "thar",
+      "district": "bikaner",
+      "placeLabel": "Canal-area tubewell, Bikaner",
+      "illustrativeLocation": true,
+      "lat": 28.05,
+      "lon": 73.2,
+      "capacityM": 40,
+      "failureLevelM": 1.5,
+      "animalCapable": false,
+      "usedBy": [
+        "pump"
+      ],
+      "people": {
+        "households": 0,
+        "animals": 0,
+        "farms": 5
+      },
+      "observationWell": true
+    },
+    {
+      "id": "TH-09",
+      "name": "Nadi #9",
+      "type": "nadi",
+      "region": "thar",
+      "district": "bikaner",
+      "placeLabel": "Village pond south-east of Bikaner",
+      "illustrativeLocation": true,
+      "lat": 27.95,
+      "lon": 73.4,
+      "capacityM": 2,
+      "failureLevelM": 0.3,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 50,
+        "animals": 300,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "KU-10",
+      "name": "Nadi #10",
+      "type": "nadi",
+      "region": "kutch",
+      "district": "banni",
+      "placeLabel": "Grassland pond, Banni",
+      "illustrativeLocation": true,
+      "lat": 23.78,
+      "lon": 69.55,
+      "capacityM": 2.2,
+      "failureLevelM": 0.3,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 20,
+        "animals": 2600,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "KU-11",
+      "name": "Virda #11",
+      "type": "beri_virda",
+      "region": "kutch",
+      "district": "banni",
+      "placeLabel": "Virda pits, Banni",
+      "illustrativeLocation": true,
+      "lat": 23.72,
+      "lon": 69.62,
+      "capacityM": 1,
+      "failureLevelM": 0.1,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 8,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "KU-12",
+      "name": "Lake #12",
+      "type": "oasis",
+      "region": "kutch",
+      "district": "banni",
+      "placeLabel": "Seasonal wetland, north Banni",
+      "illustrativeLocation": true,
+      "lat": 23.84,
+      "lon": 69.48,
+      "capacityM": 3,
+      "failureLevelM": 0.4,
+      "animalCapable": true,
+      "usedBy": [
+        "spot"
+      ],
+      "people": {
+        "households": 0,
+        "animals": 800,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "KU-13",
+      "name": "Well #13",
+      "type": "dug_well",
+      "region": "kutch",
+      "district": "bhuj",
+      "placeLabel": "Town-edge well, Bhuj",
+      "illustrativeLocation": true,
+      "lat": 23.27,
+      "lon": 69.7,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 150,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "KU-14",
+      "name": "Borewell #14",
+      "type": "borewell",
+      "region": "kutch",
+      "district": "bhuj",
+      "placeLabel": "Farm borewell west of Bhuj",
+      "illustrativeLocation": true,
+      "lat": 23.2,
+      "lon": 69.6,
+      "capacityM": 35,
+      "failureLevelM": 1.5,
+      "animalCapable": false,
+      "usedBy": [
+        "pump"
+      ],
+      "people": {
+        "households": 0,
+        "animals": 0,
+        "farms": 4
+      },
+      "observationWell": true
+    },
+    {
+      "id": "KU-15",
+      "name": "Tanka #15",
+      "type": "tanka",
+      "region": "kutch",
+      "district": "rapar",
+      "placeLabel": "School tanka, Rapar",
+      "illustrativeLocation": true,
+      "lat": 23.55,
+      "lon": 70.6,
+      "capacityM": 3,
+      "failureLevelM": 0.15,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 10,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "KU-16",
+      "name": "Well #16",
+      "type": "dug_well",
+      "region": "kutch",
+      "district": "rapar",
+      "placeLabel": "Village well east of Rapar",
+      "illustrativeLocation": true,
+      "lat": 23.6,
+      "lon": 70.68,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot",
+        "pump"
+      ],
+      "people": {
+        "households": 100,
+        "animals": 100,
+        "farms": 1
+      },
+      "observationWell": true
+    },
+    {
+      "id": "KU-17",
+      "name": "Stepwell #17",
+      "type": "stepwell",
+      "region": "kutch",
+      "district": "bhuj",
+      "placeLabel": "Heritage stepwell, Bhuj",
+      "illustrativeLocation": true,
+      "lat": 23.24,
+      "lon": 69.66,
+      "capacityM": 12,
+      "failureLevelM": 0.6,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 50,
+        "animals": 120,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "KU-18",
+      "name": "Borewell #18",
+      "type": "borewell",
+      "region": "kutch",
+      "district": "lakhpat",
+      "placeLabel": "Borewell supplying tankers, Lakhpat",
+      "illustrativeLocation": true,
+      "lat": 23.8,
+      "lon": 68.85,
+      "capacityM": 30,
+      "failureLevelM": 1.5,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch",
+        "pump"
+      ],
+      "people": {
+        "households": 40,
+        "animals": 0,
+        "farms": 3
+      },
+      "observationWell": true
+    }
+  ]
+}

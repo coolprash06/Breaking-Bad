@@ -1,0 +1,10 @@
+{
+  "generator": "scripts/generate-data.ts",
+  "seed": 20261116,
+  "timeline": {
+    "start": "2025-11-17",
+    "demoDate": "2026-11-16",
+    "end": "2027-01-11",
+    "days": 421
+  }
+}
