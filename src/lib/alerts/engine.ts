@@ -43,6 +43,8 @@ export interface SourceStatus {
   label: string;
   /** "Likely to fail in 4-6 weeks" */
   windowLabel: string;
+  /** The same window as numbers (toWeeks null = not expected to fail within the horizon). */
+  window: { fromWeeks: number; toWeeks: number | null };
   ttf: { p10: number | null; p50: number | null; p90: number | null };
   probFail: number;
   currentLevel: number;
@@ -168,6 +170,7 @@ export function evaluateSource(source: WaterSource, asOf?: string | null): Sourc
     confidence: fc.window.confidence,
     label: fc.label,
     windowLabel: fc.window.label,
+    window: { fromWeeks: fc.window.fromWeeks, toWeeks: fc.window.toWeeks },
     ttf: fc.ensemble.ttf,
     probFail: fc.ensemble.probFail,
     currentLevel: fc.ensemble.start.level,

@@ -8,7 +8,10 @@ import { formatShort } from "@/lib/time";
 import type { Provenance } from "@/lib/types";
 import type { SourceView } from "@/lib/view";
 import DataBadge from "@/components/common/DataBadge";
-import { RISK_UI, RiskPill, shortConfidence } from "@/components/map/RiskMarker";
+import { RISK_UI, RiskIcon, RiskPill, shortConfidence } from "@/components/map/RiskMarker";
+import { PERSONAS } from "@/config/personas";
+import { formatKm } from "@/lib/alerts/nearest";
+import type { DispatchMessage, FieldReply } from "@/lib/alerts/dispatch";
 
 interface Detail {
   asOf: string;
@@ -105,7 +108,45 @@ function LevelChart({ d, failure }: { d: Detail; failure: number }) {
   );
 }
 
-export default function SourceReadout({ source, asOf }: { source: SourceView | null; asOf: string }) {
+interface ReadoutProps {
+  source: SourceView | null;
+  asOf: string;
+  /** Suggested alternative being shown on the map; this source's warning stays pinned. */
+  alt: { source: SourceView; km: number } | null;
+  onOpenAlt(): void;
+  onClearAlt(): void;
+  /** Warnings sent for this source, and replies from its users. */
+  sent: DispatchMessage[];
+  replies: FieldReply[];
+}
+
+/** Pinned strip: the at-risk source stays selected while its alternative is shown on the map. */
+function AltStrip({ alt, onOpenAlt, onClearAlt }: Pick<ReadoutProps, "onOpenAlt" | "onClearAlt"> & { alt: NonNullable<ReadoutProps["alt"]> }) {
+  return (
+    <div className="wc-card grid gap-2 p-3" style={{ borderColor: "var(--lab)" }}>
+      <div className="wc-label">
+        Route shown <em>· Suggested alternative</em>
+      </div>
+      <div className="flex items-center gap-2 font-mono text-[12.5px]">
+        <RiskIcon tier={alt.source.status.tier} size={14} />
+        <span className="font-semibold">{alt.source.name}</span>
+        <span className="text-muted">
+          {formatKm(alt.km)} away · {RISK_UI[alt.source.status.tier].label}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <button className="wc-btn" onClick={onOpenAlt}>
+          Open {alt.source.name}
+        </button>
+        <button className="wc-btn" onClick={onClearAlt}>
+          Hide route
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function SourceReadout({ source, asOf, alt, onOpenAlt, onClearAlt, sent, replies }: ReadoutProps) {
   const key = source ? `${source.id}|${asOf}` : "";
   const [detail, setDetail] = useState<{ key: string; d: Detail | null; error: string | null }>({ key: "", d: null, error: null });
 
@@ -133,6 +174,7 @@ export default function SourceReadout({ source, asOf }: { source: SourceView | n
 
   return (
     <div className="grid content-start gap-3">
+      {alt && <AltStrip alt={alt} onOpenAlt={onOpenAlt} onClearAlt={onClearAlt} />}
       <div className="wc-card grid gap-2.5 p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -213,27 +255,37 @@ export default function SourceReadout({ source, asOf }: { source: SourceView | n
         Dispatch log <em>· Warnings sent</em>
       </div>
       <div className="wc-card grid gap-1.5 p-3 font-mono text-[11.5px] leading-snug">
-        {st.tier === "safe" ? (
-          <p className="text-muted">No warnings. Status: safe since {formatShort(st.since)}.</p>
+        {sent.length === 0 && replies.length === 0 ? (
+          <p className="text-muted">
+            No warnings sent{st.tier === "safe" ? `. Status: safe since ${formatShort(st.since)}.` : " yet."}
+          </p>
         ) : (
           <>
-            <div className="grid grid-cols-[52px_1fr] gap-2">
-              <time className="text-faint">{formatShort(st.since)}</time>
-              <span>
-                {RISK_UI[st.tier].label} · SMS to {source.usedBy.includes("fetch") ? `${p.households} households` : ""}
-                {source.usedBy.includes("spot") ? `${source.usedBy.includes("fetch") ? ", " : ""}herders` : ""}
-                {source.usedBy.includes("pump") ? `${source.usedBy.length > 1 ? ", " : ""}${p.farms} farms` : ""}
-              </span>
-            </div>
-            <div className="grid grid-cols-[52px_1fr] gap-2">
-              <time className="text-faint">{formatShort(st.since)}</time>
-              <span>Summary to Panchayat, {region.label}</span>
-            </div>
-            <div className="mt-1">
-              <DataBadge provenance="SIMULATED" title="Delivery log is simulated in the demo" />
-            </div>
+            {[...sent].reverse().map((m) => (
+              <div key={m.id} className="grid grid-cols-[52px_1fr] gap-2">
+                <time className="text-faint">{formatShort(m.date)}</time>
+                <span>
+                  {RISK_UI[m.tier].label} → {PERSONAS.find((p) => p.id === m.personaId)?.name}
+                  <span className="text-muted">
+                    {" "}
+                    · {m.recipients.count.toLocaleString("en-IN")} {m.recipients.unit} · {m.lang === "hi" ? "Hindi" : "English"}
+                  </span>
+                </span>
+              </div>
+            ))}
+            {replies.map((r) => (
+              <div key={r.id} className="grid grid-cols-[52px_1fr] gap-2">
+                <time className="text-faint">{formatShort(r.date)}</time>
+                <span className="text-lab">
+                  Field reply: {r.value === 1 ? "water low" : "still fine"}
+                </span>
+              </div>
+            ))}
           </>
         )}
+        <div className="mt-1">
+          <DataBadge provenance="SIMULATED" title="Delivery is simulated in the demo" />
+        </div>
       </div>
     </div>
   );

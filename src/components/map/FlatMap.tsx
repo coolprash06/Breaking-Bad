@@ -23,7 +23,14 @@ export interface ZoomApi {
 }
 export interface MapApi extends ZoomApi {
   /** Smoothly centre on a source (or the whole region when null). `intro` starts zoomed out, for the globe hand-off. */
-  flyTo(id: string | null, opts?: { intro?: boolean }): void;
+  flyTo(id: string | null, opts?: { intro?: boolean; pairId?: string }): void;
+}
+
+/** Dashed route from an at-risk source to its suggested alternative. */
+export interface MapLink {
+  fromId: string;
+  toId: string;
+  km: number;
 }
 
 interface Props {
@@ -33,6 +40,7 @@ interface Props {
   onSelect(id: string): void;
   isRelevant(s: SourceView): boolean;
   apiRef: RefObject<MapApi | null>;
+  link: MapLink | null;
 }
 
 interface View {
@@ -51,7 +59,7 @@ const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 
 /** Zoom steps used to decide when to re-cluster (about every 26% of zoom). */
 const bucketOf = (k: number) => Math.round(Math.log2(k) * 3);
 
-export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant, apiRef }: Props) {
+export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant, apiRef, link }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<SVGGElement>(null);
   const scaleBarRef = useRef<SVGPathElement>(null);
@@ -223,7 +231,15 @@ export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant
       flyTo: (id, opts) => {
         if (!base) return;
         const p = sourcePos(id);
-        const target: View = p && id ? { k: focusK(id), cx: p[0], cy: p[1] } : base.home;
+        const q = sourcePos(opts?.pairId ?? null);
+        let target: View = p && id ? { k: focusK(id), cx: p[0], cy: p[1] } : base.home;
+        if (p && q) {
+          // Frame both ends of the route in the middle ~55% of the view.
+          const dx = Math.max(Math.abs(p[0] - q[0]), 1);
+          const dy = Math.max(Math.abs(p[1] - q[1]), 1);
+          const k = Math.min(MAX_K, Math.max(MIN_K, Math.min((size.w * 0.55) / dx, (size.h * 0.55) / dy)));
+          target = { k, cx: (p[0] + q[0]) / 2, cy: (p[1] + q[1]) / 2 };
+        }
         if (opts?.intro) {
           // Start zoomed out from the same centre so it continues the globe's fly-in.
           const t = clamp(target);
@@ -307,10 +323,12 @@ export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant
           <g ref={worldRef} style={{ ["--inv" as string]: 1 }}>
             <StaticLayer graticule={base.graticule} land={base.land} india={base.india} states={base.states} />
             <RegionLabels at={base.at} />
+            {link && <LinkLayer at={base.at} sources={sources} link={link} />}
             <MarkerLayer
               at={base.at}
               sources={sources}
               selectedId={selectedId}
+              altId={link?.toId ?? null}
               isRelevant={isRelevant}
               bucket={bucket}
               onSelect={(id) => {
@@ -358,6 +376,28 @@ const StaticLayer = memo(function StaticLayer(p: { graticule: string; land: stri
 type At = (lon: number, lat: number) => [number, number];
 const keepSize = (x: number, y: number) => ({ transform: `translate(${x}px, ${y}px) scale(var(--inv))` });
 
+function LinkLayer({ at, sources, link }: { at: At; sources: SourceView[]; link: MapLink }) {
+  const a = sources.find((s) => s.id === link.fromId);
+  const b = sources.find((s) => s.id === link.toId);
+  if (!a || !b) return null;
+  const [x1, y1] = at(a.lon, a.lat);
+  const [x2, y2] = at(b.lon, b.lat);
+  const label = link.km < 1 ? `${link.km.toFixed(1)} km` : `${Math.round(link.km)} km`;
+  const w = label.length * 6.6 + 10;
+  return (
+    <g pointerEvents="none" aria-hidden>
+      <line className="alt-link-glow" x1={x1} y1={y1} x2={x2} y2={y2} vectorEffect="non-scaling-stroke" />
+      <line className="alt-link" x1={x1} y1={y1} x2={x2} y2={y2} vectorEffect="non-scaling-stroke" />
+      <g style={keepSize((x1 + x2) / 2, (y1 + y2) / 2)}>
+        <rect x={-w / 2} y={-9} width={w} height={18} rx={9} fill="var(--panel)" stroke="var(--lab)" strokeWidth={1} />
+        <text className="alt-km" textAnchor="middle" y={3.5}>
+          {label}
+        </text>
+      </g>
+    </g>
+  );
+}
+
 const RegionLabels = memo(function RegionLabels({ at }: { at: At }) {
   const items = [
     [70.6, 27.6, "THAR", "reg"],
@@ -391,6 +431,8 @@ interface LayerProps {
   at: At;
   sources: SourceView[];
   selectedId: string | null;
+  /** Suggested alternative: always its own marker, ringed and labelled. */
+  altId: string | null;
   isRelevant(s: SourceView): boolean;
   bucket: number;
   onSelect(id: string): void;
@@ -398,7 +440,7 @@ interface LayerProps {
 }
 
 /** Re-renders only when the data, selection, tab or cluster step changes. */
-const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, isRelevant, bucket, onSelect, onCluster }: LayerProps) {
+const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, altId, isRelevant, bucket, onSelect, onCluster }: LayerProps) {
   const layout = useMemo(() => {
     const k = Math.pow(2, bucket / 3); // representative zoom for this step
     const r = CLUSTER_PX / k; // cluster radius in projected px
@@ -406,6 +448,7 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, isRelev
     const order = [...sources].sort(
       (a, b) =>
         Number(b.id === selectedId) - Number(a.id === selectedId) ||
+        Number(b.id === altId) - Number(a.id === altId) ||
         Number(isRelevant(b)) - Number(isRelevant(a)) ||
         SEVERITY[a.status.tier] - SEVERITY[b.status.tier],
     );
@@ -416,7 +459,11 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, isRelev
       used.add(s.id);
       const [x, y] = pos.get(s.id)!;
       // `order` puts the selected source first, so it always leads its cluster.
-      const members = [s, ...order.filter((o) => !used.has(o.id) && Math.hypot(pos.get(o.id)![0] - x, pos.get(o.id)![1] - y) < r)];
+      // The selected source and its alternative are never swallowed into a cluster.
+      const pinned = (id: string) => id === selectedId || id === altId;
+      const members = pinned(s.id)
+        ? [s]
+        : [s, ...order.filter((o) => !used.has(o.id) && !pinned(o.id) && Math.hypot(pos.get(o.id)![0] - x, pos.get(o.id)![1] - y) < r)];
       members.forEach((m) => used.add(m.id));
       if (members.length === 1) {
         placed.push({ kind: "one", ids: [s.id], x, y, lead: s });
@@ -441,8 +488,11 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, isRelev
       y1: p.y * k + 13,
     }));
     const labels: { id: string; x: number; y: number; dx: number; dy: number; anchor: "start" | "end" | "middle"; name: string; sub: string }[] = [];
-    const want = placed.filter((p) => p.lead.id === selectedId || (p.kind === "one" && isRelevant(p.lead) && p.lead.status.tier !== "safe"));
-    want.sort((a, b) => Number(b.lead.id === selectedId) - Number(a.lead.id === selectedId));
+    const want = placed.filter(
+      (p) => p.lead.id === selectedId || p.lead.id === altId || (p.kind === "one" && isRelevant(p.lead) && p.lead.status.tier !== "safe"),
+    );
+    const rank = (p: Placed) => (p.lead.id === selectedId ? 2 : p.lead.id === altId ? 1 : 0);
+    want.sort((a, b) => rank(b) - rank(a));
     for (const p of want) {
       const name = p.lead.name;
       const sub = p.kind === "cluster" ? `${shortConfidence(p.lead.status)} · +${p.ids.length - 1} nearby` : shortConfidence(p.lead.status);
@@ -456,13 +506,13 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, isRelev
         { dx: 0, dy: 26, anchor: "middle" as const, box: { x0: sx - w / 2, y0: sy + 14, x1: sx + w / 2, y1: sy + 40 } },
       ];
       const hit = (b: (typeof options)[0]["box"]) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
-      const ok = options.find((o) => !hit(o.box)) ?? (p.lead.id === selectedId ? options[0] : null);
+      const ok = options.find((o) => !hit(o.box)) ?? (rank(p) > 0 ? options[0] : null);
       if (!ok) continue;
       boxes.push(ok.box);
       labels.push({ id: p.lead.id, x: p.x, y: p.y, dx: ok.dx, dy: ok.dy, anchor: ok.anchor, name, sub });
     }
     return { placed, labels };
-  }, [at, sources, selectedId, isRelevant, bucket]);
+  }, [at, sources, selectedId, altId, isRelevant, bucket]);
 
   return (
     <g>
@@ -500,12 +550,13 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, isRelev
           );
         }
         const sel = s.id === selectedId;
+        const isAlt = s.id === altId;
         return (
           <g
             key={s.id}
             data-marker
             style={keepSize(p.x, p.y)}
-            opacity={isRelevant(s) || sel ? 1 : 0.3}
+            opacity={isRelevant(s) || sel || isAlt ? 1 : 0.3}
             className="cursor-pointer"
             role="button"
             tabIndex={0}
@@ -517,6 +568,12 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, isRelev
               <>
                 <circle r={17} fill="none" stroke="var(--lab-glow)" strokeWidth={5} />
                 <circle r={17} fill="none" stroke="var(--lab)" strokeWidth={1.6} />
+              </>
+            )}
+            {isAlt && (
+              <>
+                <circle r={18} fill="none" stroke="var(--lab-glow)" strokeWidth={5} />
+                <circle r={18} fill="none" stroke="var(--lab)" strokeWidth={1.6} strokeDasharray="4 3" />
               </>
             )}
             <circle r={13} fill="transparent" />

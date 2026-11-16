@@ -10,7 +10,7 @@ See `prd.txt` for the full requirements and `JUDGES_NOTES.md` for which data is 
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in Twilio values (optional)
+cp .env.example .env.local   # no secrets needed: SMS delivery is simulated
 npm run generate             # writes data/simulated/*.json
 npm run dev                  # http://localhost:3000
 npm test                     # engine unit tests

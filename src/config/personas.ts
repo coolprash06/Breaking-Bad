@@ -133,3 +133,56 @@ export const PERSONAS: Persona[] = [
 export function personasFor(cat: PersonaCategory): Persona[] {
   return PERSONAS.filter((p) => p.category === cat);
 }
+
+/** Farm pumping cut used in the Category 3 "what if" re-run (F5). */
+export const PUMP_CUT = 0.3;
+
+/** Field users read in Hindi by default; officers in English. Both are on the phone toggle. */
+export function defaultLang(p: Persona): "en" | "hi" {
+  return p.category === "manage" ? "en" : "hi";
+}
+
+export interface Recipients {
+  count: number;
+  unit: string;
+}
+
+/**
+ * SIMULATED recipient lists (no real phone numbers exist in the demo). Counts are
+ * derived from the source's registered users:
+ *  households: one phone per household     herders: one per ~50 animals
+ *  bathing: ~1 in 3 households             tankers: 2 per large drinking source
+ *  travellers: a 25-phone route list at stepwells and wells on routes
+ *  farmers: one per farm                    officers: one desk each
+ * Returns null when this persona does not use the source.
+ */
+export function recipientsFor(
+  p: Persona,
+  s: { type: string; usedBy: string[]; animalCapable: boolean; people: { households: number; animals: number; farms: number } },
+  opts: { needsTankers?: boolean; tier?: string } = {},
+): Recipients | null {
+  const { households, animals, farms } = s.people;
+  const uses = (c: string) => s.usedBy.includes(c);
+  switch (p.id) {
+    case "household":
+      return uses("fetch") && households > 0 ? { count: households, unit: "households" } : null;
+    case "tanker":
+      return uses("fetch") && households >= 40 && s.type !== "nadi" ? { count: 2, unit: "tanker operators" } : null;
+    case "herder":
+      return uses("spot") && s.animalCapable && animals > 0 ? { count: Math.ceil(animals / 50), unit: "herders" } : null;
+    case "bathing":
+      return uses("spot") && households > 0 ? { count: Math.ceil(households / 3), unit: "families" } : null;
+    case "traveller":
+      return uses("spot") && (s.type === "stepwell" || s.type === "dug_well") ? { count: 25, unit: "travellers" } : null;
+    case "farmer":
+      return uses("pump") && farms > 0 ? { count: farms, unit: farms === 1 ? "farm" : "farms" } : null;
+    case "panchayat":
+      return { count: 1, unit: "Panchayat office" };
+    case "district":
+      return opts.tier === "watch" ? null : { count: 1, unit: "district water office" };
+    case "ngo":
+      return opts.tier === "emergency" || opts.needsTankers ? { count: 1, unit: "NGO desk" } : null;
+    default:
+      return null;
+  }
+}

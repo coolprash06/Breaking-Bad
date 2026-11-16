@@ -11,16 +11,16 @@ export const REGIONS: Record<Region, { label: string; state: string }> = {
 
 export const DISTRICTS: Record<
   DistrictId,
-  { label: string; region: Region; lat: number; lon: number }
+  { label: string; labelHi: string; region: Region; lat: number; lon: number }
 > = {
-  jaisalmer: { label: "Jaisalmer", region: "thar", lat: 26.91, lon: 70.91 },
-  barmer: { label: "Barmer", region: "thar", lat: 25.75, lon: 71.39 },
-  bikaner: { label: "Bikaner", region: "thar", lat: 28.02, lon: 73.31 },
-  phalodi: { label: "Phalodi", region: "thar", lat: 27.13, lon: 72.36 },
-  bhuj: { label: "Bhuj", region: "kutch", lat: 23.25, lon: 69.67 },
-  rapar: { label: "Rapar", region: "kutch", lat: 23.57, lon: 70.64 },
-  banni: { label: "Banni grasslands", region: "kutch", lat: 23.76, lon: 69.58 },
-  lakhpat: { label: "Lakhpat", region: "kutch", lat: 23.83, lon: 68.78 },
+  jaisalmer: { label: "Jaisalmer", labelHi: "जैसलमेर", region: "thar", lat: 26.91, lon: 70.91 },
+  barmer: { label: "Barmer", labelHi: "बाड़मेर", region: "thar", lat: 25.75, lon: 71.39 },
+  bikaner: { label: "Bikaner", labelHi: "बीकानेर", region: "thar", lat: 28.02, lon: 73.31 },
+  phalodi: { label: "Phalodi", labelHi: "फलोदी", region: "thar", lat: 27.13, lon: 72.36 },
+  bhuj: { label: "Bhuj", labelHi: "भुज", region: "kutch", lat: 23.25, lon: 69.67 },
+  rapar: { label: "Rapar", labelHi: "रापर", region: "kutch", lat: 23.57, lon: 70.64 },
+  banni: { label: "Banni grasslands", labelHi: "बन्नी", region: "kutch", lat: 23.76, lon: 69.58 },
+  lakhpat: { label: "Lakhpat", labelHi: "लखपत", region: "kutch", lat: 23.83, lon: 68.78 },
 };
 
 export const DISTRICT_IDS = Object.keys(DISTRICTS) as DistrictId[];

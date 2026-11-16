@@ -18,6 +18,8 @@ export function buildSourcesPayload(requestedAsOf?: string | null): SourcesPaylo
         confidence: st.confidence,
         label: st.label,
         windowLabel: st.windowLabel,
+        window: st.window,
+        reasonSms: st.reasons.find((r) => r.sms)?.sms ?? null,
         summary: st.summary,
         ttf: st.ttf,
         currentLevel: st.currentLevel,

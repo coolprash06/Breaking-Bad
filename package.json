@@ -19,8 +19,7 @@
     "react-dom": "19.3.0",
     "recharts": "^3.10.1",
     "server-only": "^0.0.1",
-    "three": "0.186.1",
-    "twilio": "^6.3.0"
+    "three": "0.186.1"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",

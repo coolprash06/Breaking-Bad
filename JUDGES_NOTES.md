@@ -56,6 +56,24 @@ There are 28 simulated sources. The 10 numbered #19 to #28 are nearby Safe alter
    - Grey (no data) and at-risk sources are never suggested.
    - If nothing suitable is in range, the warning says so and gives the distance to the closest option, for example: "No safe water for animals found within 25 km. The closest is Well #7, 315 km away. Contact the Panchayat."
 
+## Warnings and delivery (F5, F6)
+
+**Delivery is simulated.** Warnings arrive on a simulated basic phone inside the app, and every one is listed in the dispatch log. Both are labelled SIMULATED. No real SMS is sent in the demo: an unregistered sender ID is blocked by UAE carriers (TDRA sender-ID registration) and India requires DLT registration of the sender and every message template, and neither could be completed before the deadline. A real deployment would send the same text through an SMS gateway using a registered sender ID (DLT in India, TDRA in the UAE). The app has no SMS dependency and needs no secrets.
+
+**One template per persona, filled only from engine output:** tier, failure window in weeks, confidence, the top reason, the nearest *suitable* Safe source with its distance, and an "act by" date (the early P10 edge of the failure window). Nothing is hard-coded per source.
+
+- Fetch & Carry (households, tankers): which Safe source to use and how far.
+- Use on Spot (herders, bathing, travellers): where to go and by when.
+- Pump at Scale (farmers): how much a 30% pumping cut gains, from a re-run of the same forecast with pumping reduced.
+- Manage & Oversee (Panchayat, district officer, NGO): the source's status plus a district summary (sources at risk, households, animals, farms) and either the nearest safe drinking water or "send tankers". The NGO is only messaged in an emergency or when no drinking water is within 8 km.
+- Stepwell #6, the source with no suitable alternative, says so honestly and tells people to contact the Panchayat.
+
+**English and Hindi.** Field users receive simple village-level Hindi by default and officers receive English; the phone has a toggle to read either. Every message is kept within 2 SMS: English uses only GSM-7 characters (160 per SMS, 153 per part when split), and Hindi is UCS-2 (70 per SMS, 67 per part). If a message would run longer, optional parts are dropped in a fixed order (first the closest far-away option, then "be ready", then the reason). A test checks every persona × source × tier in both languages. The phone shows the character count, number of SMS and encoding.
+
+**Dispatch from the engine.** When the batch clock moves and a source's tier escalates (Watch → Warning → Emergency, or the sensor goes silent), the engine sends that source's messages to every persona group that uses it. Each log entry shows the demo date, persona group, number of recipients and language. A source never gets two messages for the same tier, and stepping back down sends nothing. Reset returns to demo day and clears everything sent since. Warnings already active on demo day are shown as sent that morning. Recipient counts are simulated from each source's registered users: one phone per household, one herder per ~50 animals, about one in three households for bathing, 2 tanker operators per large drinking source, a 25-phone route list for travellers, and one per farm.
+
+**Replies (F9).** On a field persona's phone, keys 1 and 2 reply "water low" or "still fine". The reply appears in the dispatch log as a field report.
+
 ## Demo login
 
 `/login` is a placeholder for the team's existing login page. Click **Try demo (Panchayat)**.
@@ -70,4 +88,4 @@ No third-party map tiles are used: their borders differ from India's official bo
 
 ## Open-source tools used
 
-Next.js, React, TypeScript, Tailwind CSS, three.js, React Three Fiber, d3-geo, Recharts, Vitest, tsx, Twilio SDK. Fonts (Google Fonts via `next/font`): Bebas Neue, JetBrains Mono, Inter, Noto Sans Devanagari. mapshaper (via `npx`) was used once to simplify the boundary files.
+Next.js, React, TypeScript, Tailwind CSS, three.js, React Three Fiber, d3-geo, Recharts, Vitest, tsx. Fonts (Google Fonts via `next/font`): Bebas Neue, JetBrains Mono, Inter, Noto Sans Devanagari. mapshaper (via `npx`) was used once to simplify the boundary files.

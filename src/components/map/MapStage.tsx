@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { Component, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { loadBoundaries, type GeoBundle } from "@/lib/geo/boundaries";
 import type { SourceView } from "@/lib/view";
-import FlatMap, { type MapApi } from "./FlatMap";
+import FlatMap, { type MapApi, type MapLink } from "./FlatMap";
 import { THAR_KUTCH_FRAME } from "@/lib/geo/boundaries";
 import type { GlobeApi } from "./Globe";
 import { RISK_ORDER, RISK_UI, RiskIcon } from "./RiskMarker";
@@ -63,7 +63,9 @@ interface Props {
   onSelect(id: string): void;
   isRelevant(s: SourceView): boolean;
   /** Fly to this source (persona panel, readout links). `n` changes on every request. */
-  focus: { id: string; n: number } | null;
+  focus: { id: string; n: number; pairId?: string } | null;
+  /** Route from an at-risk source to its suggested alternative. */
+  link: MapLink | null;
 }
 
 const REGION_CENTRE = {
@@ -73,7 +75,7 @@ const REGION_CENTRE = {
 /** Roughly India's box: zooming through the globe here hands off to the map. */
 const nearIndia = (lat: number, lon: number) => lat > 4 && lat < 38 && lon > 66 && lon < 99;
 
-export default function MapStage({ sources, selectedId, onSelect, isRelevant, focus }: Props) {
+export default function MapStage({ sources, selectedId, onSelect, isRelevant, focus, link }: Props) {
   const [geo, setGeo] = useState<GeoBundle | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [chosenView, setView] = useState<View>("globe");
@@ -111,11 +113,11 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
    * One continuous move: the globe flies toward the target and, part-way in,
    * the map fades in already zooming toward the same spot.
    */
-  const handOff = useCallback((sourceId: string | null) => {
+  const handOff = useCallback((sourceId: string | null, pairId?: string) => {
     const s = sourceId ? sourcesRef.current.find((x) => x.id === sourceId) : null;
     if (viewRef.current === "map" || !globeApi.current) {
       setView("map");
-      mapApi.current?.flyTo(sourceId);
+      mapApi.current?.flyTo(sourceId, { pairId });
       return;
     }
     if (flying.current) return;
@@ -124,7 +126,7 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
     globeApi.current.flyTo(target.lat, target.lon, () => {
       flying.current = false;
       setView("map");
-      mapApi.current?.flyTo(sourceId, { intro: true });
+      mapApi.current?.flyTo(sourceId, { intro: true, pairId });
     });
   }, []);
 
@@ -145,7 +147,7 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
 
   // Focus requests from outside (persona panel, readout).
   useEffect(() => {
-    if (focus) handOff(focus.id);
+    if (focus) handOff(focus.id, focus.pairId);
   }, [focus, handOff]);
 
   const showGlobe = () => {
@@ -188,7 +190,7 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
       )}
       {geo && (
         <div className={`absolute inset-0 transition-opacity duration-[450ms] ${view === "map" ? "opacity-100" : "pointer-events-none opacity-0"}`}>
-          <FlatMap geo={geo} sources={sources} selectedId={selectedId} onSelect={onSelect} isRelevant={isRelevant} apiRef={mapApi} />
+          <FlatMap geo={geo} sources={sources} selectedId={selectedId} onSelect={onSelect} isRelevant={isRelevant} apiRef={mapApi} link={link} />
         </div>
       )}
 

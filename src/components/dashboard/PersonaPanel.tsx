@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { personasFor, PURPOSE_TABS, type Persona } from "@/config/personas";
-import { personaWarning } from "@/lib/alerts/warnings";
+import { personasFor, PUMP_CUT, PURPOSE_TABS, type Persona } from "@/config/personas";
+import { personaWarning, type ScenarioLite } from "@/lib/alerts/warnings";
+import { smsInfo } from "@/lib/sms/segments";
 import { formatKm } from "@/lib/alerts/nearest";
 import type { PersonaCategory } from "@/lib/types";
 import type { SourceView } from "@/lib/view";
@@ -16,33 +17,43 @@ interface Props {
   sources: SourceView[];
   asOf: string;
   onFocus(id: string): void;
+  /** Show the suggested alternative on the map while keeping this warning pinned. */
+  onAlt(fromId: string, toId: string): void;
+  /** The alternative currently shown on the map, if any. */
+  altId: string | null;
 }
 
-/** Cat 3: what a 30% pumping cut buys, from the same forecast engine. */
-function PumpScenario({ source, asOf }: { source: SourceView; asOf: string }) {
-  const key = `${source.id}|${asOf}`;
-  const [res, setRes] = useState<{ key: string; label: string | null }>({ key: "", label: null });
+interface ScenarioState {
+  key: string;
+  label: string | null;
+  lite: ScenarioLite | null;
+}
+
+/** Cat 3: what a pumping cut buys, re-run by the same forecast engine. */
+function usePumpScenario(source: SourceView | null, asOf: string, enabled: boolean) {
+  const pumped = !!source?.usedBy.includes("pump");
+  const key = source ? `${source.id}|${asOf}` : "";
+  const [res, setRes] = useState<ScenarioState>({ key: "", label: null, lite: null });
   useEffect(() => {
-    if (!source.usedBy.includes("pump")) return;
+    if (!enabled || !source || !pumped) return;
     let live = true;
-    fetch(`/api/forecast/${source.id}?asOf=${asOf}&cut_pump=0.3`)
+    fetch(`/api/forecast/${source.id}?asOf=${asOf}&cut_pump=${PUMP_CUT}`)
       .then((r) => r.json())
-      .then((d: { scenario?: { label: string } | null }) => live && setRes({ key, label: d.scenario?.label ?? null }))
-      .catch(() => live && setRes({ key, label: null }));
+      .then((d: { scenario?: { label: string; extraDays: number | null; beyondHorizon: boolean } | null }) => {
+        if (!live) return;
+        const sc = d.scenario;
+        setRes({
+          key,
+          label: sc?.label ?? null,
+          lite: sc ? { cutPct: Math.round(PUMP_CUT * 100), extraDays: sc.extraDays, beyondHorizon: sc.beyondHorizon } : null,
+        });
+      })
+      .catch(() => live && setRes({ key, label: null, lite: null }));
     return () => {
       live = false;
     };
-  }, [key, source.id, source.usedBy, asOf]);
-
-  if (!source.usedBy.includes("pump")) {
-    return <p className="text-[12.5px] text-muted">{source.name} is not pumped by farms. Pick a borewell or a shared village well.</p>;
-  }
-  return (
-    <p className="font-mono text-[12px] leading-relaxed">
-      <span className="text-muted">If pumping is cut 30%: </span>
-      {res.key === key ? (res.label ?? "No change in the forecast") : "Re-running forecast…"}
-    </p>
-  );
+  }, [enabled, key, source, pumped, asOf]);
+  return { pumped, ready: res.key === key, label: res.key === key ? res.label : null, lite: res.key === key ? res.lite : null };
 }
 
 function ManageSummary({ sources }: { sources: SourceView[] }) {
@@ -88,8 +99,12 @@ function PersonaCard({
   sources,
   asOf,
   onFocus,
-}: { p: Persona; on: boolean; onClick(): void } & Pick<Props, "source" | "sources" | "asOf" | "onFocus">) {
-  const w = on && source ? personaWarning(p, source, sources, asOf) : null;
+  onAlt,
+  altId,
+}: { p: Persona; on: boolean; onClick(): void } & Pick<Props, "source" | "sources" | "asOf" | "onFocus" | "onAlt" | "altId">) {
+  const pump = usePumpScenario(source, asOf, on && p.id === "farmer");
+  const w = on && source ? personaWarning(p, source, sources, asOf, { scenario: pump.lite }) : null;
+  const seg = w ? smsInfo(w.text).segments : 0;
   return (
     <div
       className="wc-card grid gap-1 px-3 py-2.5 text-left"
@@ -107,21 +122,46 @@ function PersonaCard({
           <div className="font-mono text-[10px] tracking-[0.14em] text-faint uppercase">
             {w.isAlert ? "Warning they receive" : "Status they receive"} · {source.name}
           </div>
-          <p className="rounded-md border border-dashed border-line2 bg-panel2 px-2.5 py-2 font-mono text-[12px] leading-relaxed">{w.text}</p>
+          <div className="grid gap-1.5 rounded-md border border-dashed border-line2 bg-panel2 px-2.5 py-2">
+            <p className="font-mono text-[12px] leading-relaxed">{w.text}</p>
+            <p className="font-hindi text-[13px] leading-relaxed opacity-85" lang="hi">
+              {w.hi}
+            </p>
+            <p className="font-mono text-[10px] text-faint">
+              {seg} SMS EN · {smsInfo(w.hi).segments} SMS HI
+            </p>
+          </div>
           <div className="flex flex-wrap gap-1.5">
             <SourceLink id={source.id} label={`Show ${source.name}`} onFocus={onFocus} />
             {w.isAlert && w.nearest.within && (
-              <SourceLink id={w.nearest.within.source.id} label={`${w.nearest.within.source.name} · ${formatKm(w.nearest.within.km)}`} onFocus={onFocus} />
+              <button
+                className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[10.5px] tracking-[0.06em] uppercase hover:border-lab hover:text-lab ${
+                  altId === w.nearest.within.source.id ? "border-lab text-lab" : "border-line2"
+                }`}
+                onClick={() => onAlt(source.id, w.nearest.within!.source.id)}
+                title="Show the route on the map. This warning stays pinned."
+              >
+                <span aria-hidden>⇢</span>
+                {w.nearest.within.source.name} · {formatKm(w.nearest.within.km)}
+              </button>
             )}
           </div>
-          {p.id === "farmer" && <PumpScenario source={source} asOf={asOf} />}
+          {p.id === "farmer" && (
+            <p className="font-mono text-[11.5px] leading-relaxed text-muted">
+              {!pump.pumped
+                ? `${source.name} is not pumped by farms. Pick a borewell or a shared village well.`
+                : pump.ready
+                  ? `Engine re-run, pumping cut ${Math.round(PUMP_CUT * 100)}%: ${pump.label ?? "no change in the forecast"}`
+                  : "Re-running forecast with less pumping…"}
+            </p>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export default function PersonaPanel({ tab, personaId, onPersona, source, sources, asOf, onFocus }: Props) {
+export default function PersonaPanel({ tab, personaId, onPersona, source, sources, asOf, onFocus, onAlt, altId }: Props) {
   const personas = personasFor(tab);
   const focus = PURPOSE_TABS.find((t) => t.id === tab)?.focus;
   return (
@@ -141,6 +181,8 @@ export default function PersonaPanel({ tab, personaId, onPersona, source, source
           sources={sources}
           asOf={asOf}
           onFocus={onFocus}
+          onAlt={onAlt}
+          altId={altId}
         />
       ))}
     </aside>

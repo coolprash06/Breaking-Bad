@@ -6,10 +6,19 @@ import { personaWarning, type SourceLite } from "./warnings";
 import { PERSONAS } from "@/config/personas";
 import type { DisplayTier } from "./tiers";
 import { addDays } from "@/lib/time";
+import { smsInfo } from "@/lib/sms/segments";
 
 const sources = getSources().data;
 const byId = (id: string) => sources.find((s) => s.id === id)!;
 const DEMO = "2026-11-16";
+
+/** Same shape the API sends (the short SMS reason is picked from the engine's reasons). */
+function liteAll(date: string): SourceLite[] {
+  return sources.map((s) => {
+    const st = evaluateSource(s, date);
+    return { ...s, status: { ...st, reasonSms: st.reasons.find((r) => r.sms)?.sms ?? null } };
+  });
+}
 
 describe("haversineKm", () => {
   it("matches known distances", () => {
@@ -62,14 +71,16 @@ describe("nearestSafe", () => {
 });
 
 describe("personaWarning on demo data", () => {
-  const all: SourceLite[] = sources.map((s) => ({ ...s, status: evaluateSource(s, DEMO) }));
+  const all = liteAll(DEMO);
   const nadi9 = all.find((s) => s.id === "TH-09")!;
 
   it("sends Nadi #9 herders to a nearby animal-capable Safe source, with confidence stated", () => {
     const herder = PERSONAS.find((p) => p.id === "herder")!;
     const w = personaWarning(herder, nadi9, all, DEMO);
     expect(w.isAlert).toBe(true);
-    expect(w.text).toMatch(/\d+% confident/);
+    expect(w.text).toMatch(/\d+% sure/);
+    expect(w.hi).toMatch(/\d+% पक्का/);
+    expect(w.hi).toContain("कुआँ नं.22");
     expect(w.text).toMatch(/Move herds to Well #22 \(\d+ km\)/);
     expect(w.nearest.within!.source.animalCapable).toBe(true);
   });
@@ -84,7 +95,7 @@ describe("personaWarning on demo data", () => {
   it("every field persona gets a nearest-safe line on an alert", () => {
     for (const p of PERSONAS.filter((x) => x.need !== "none")) {
       const w = personaWarning(p, nadi9, all, DEMO);
-      expect(w.text).toMatch(/Nearest safe|No safe|Move herds to/);
+      expect(w.text).toMatch(/Get drinking water from|Fill tankers at|Move bathing and washing to|drink and refill at|No safe|Move herds to/);
     }
   });
 });
@@ -130,5 +141,54 @@ describe("safe-alternative coverage through the demo weeks", () => {
   it("Borewell #5's village has safe drinking water within 8 km (Panchayat message)", () => {
     const cands: Candidate[] = sources.map((s) => ({ source: s, tier: evaluateSource(s, addDays(DEMO, 14)).tier }));
     expect(nearestSafe(byId("TH-05"), cands, "drink", 8).within).not.toBeNull();
+  });
+});
+
+describe("SMS length and wording of every template", () => {
+  const tiers = ["watch", "warning", "emergency", "nodata", "safe"] as const;
+
+  it("fits every persona x source x tier in 1-2 segments; English stays GSM-7; confidence always stated", () => {
+    let checked = 0;
+    for (const date of [DEMO, addDays(DEMO, 21)]) {
+      const all = liteAll(date);
+      for (const src of all)
+        for (const tier of tiers)
+          for (const p of PERSONAS) {
+            const forced = { ...src, status: { ...src.status, tier } };
+            const scenario = { cutPct: 30, extraDays: 23, beyondHorizon: false };
+            const w = personaWarning(p, forced, all, date, { scenario });
+            const en = smsInfo(w.text);
+            const hi = smsInfo(w.hi);
+            const where = `${src.id} ${tier} ${p.id}`;
+            expect(en.encoding, where).toBe("GSM-7");
+            expect(en.segments, `${where}: ${w.text}`).toBeLessThanOrEqual(2);
+            expect(hi.segments, `${where}: ${w.hi}`).toBeLessThanOrEqual(2);
+            expect(w.text, where).toMatch(/\d+%/);
+            expect(w.hi, where).toMatch(/\d+%/);
+            checked++;
+          }
+    }
+    expect(checked).toBeGreaterThan(2000);
+  }, 60_000);
+
+  it("farmers get the pumping-cut result from the scenario re-run, not a fixed number", () => {
+    const farmer = PERSONAS.find((p) => p.id === "farmer")!;
+    const all = liteAll(DEMO);
+    const tw5 = { ...all.find((s) => s.id === "TH-05")!, status: { ...all.find((s) => s.id === "TH-05")!.status, tier: "warning" as const } };
+    const a = personaWarning(farmer, tw5, all, DEMO, { scenario: { cutPct: 30, extraDays: 23, beyondHorizon: false } });
+    const b = personaWarning(farmer, tw5, all, DEMO, { scenario: { cutPct: 30, extraDays: 44, beyondHorizon: false } });
+    expect(a.text).toContain("about 3 more weeks");
+    expect(b.text).toContain("about 6 more weeks");
+    expect(a.hi).toContain("करीब 3 हफ्ते");
+  });
+
+  it("Stepwell #6 tells every field persona to contact the Panchayat, in both languages", () => {
+    const all = liteAll(DEMO);
+    const ts6 = all.find((s) => s.id === "TH-06")!;
+    for (const p of PERSONAS.filter((x) => x.need !== "none" && ts6.usedBy.includes(x.category as never))) {
+      const w = personaWarning(p, { ...ts6, status: { ...ts6.status, tier: "warning" } }, all, DEMO);
+      expect(w.text).toContain("Contact the Panchayat.");
+      expect(w.hi).toContain("पंचायत से बात करें।");
+    }
   });
 });

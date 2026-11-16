@@ -231,6 +231,48 @@ body::after {
 .wc-map .mk-l { font: 600 10.5px var(--font-mono); fill: var(--text); paint-order: stroke; stroke: var(--sea); stroke-width: 3px; }
 .wc-map .mk-c { font: 10px var(--font-mono); fill: var(--muted); paint-order: stroke; stroke: var(--sea); stroke-width: 3px; }
 
+/* Simulated basic phone (F6): a cheap candy-bar handset with a monochrome LCD.
+   It is a physical object, so it looks the same in dark and daylight modes. */
+.wc-phone {
+  background: linear-gradient(160deg, #2f262c 0%, #1b1519 55%, #141014 100%);
+  border: 1px solid #4a3d45;
+  border-radius: 30px 30px 38px 38px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 18px 34px -18px rgba(0, 0, 0, 0.7);
+  color: #d9cfbf;
+}
+.wc-lcd {
+  --lcd-ink: #1d2618;
+  --lcd-dim: #4f5e45;
+  background: linear-gradient(180deg, #b3c2a2 0%, #a3b391 100%);
+  color: var(--lcd-ink);
+  border: 3px solid #0e0b0d;
+  border-radius: 6px;
+  box-shadow: inset 0 0 14px rgba(29, 38, 24, 0.35);
+}
+.wc-lcd hr { border: 0; border-top: 1px dashed var(--lcd-dim); }
+.wc-lcd .dim { color: var(--lcd-dim); }
+.wc-lcd .inv { background: var(--lcd-ink); color: #b3c2a2; }
+.wc-key {
+  background: linear-gradient(180deg, #3a3036 0%, #272026 100%);
+  border: 1px solid #4d4048;
+  border-radius: 9px;
+  color: #e6dccb;
+  font-family: var(--font-mono);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 2px 0 #0d0a0c;
+}
+.wc-key:disabled { cursor: default; }
+button.wc-key:not(:disabled):hover { border-color: var(--lab); }
+button.wc-key:not(:disabled):active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+.wc-key-live { border-color: color-mix(in srgb, var(--lab) 70%, #4d4048); box-shadow: 0 0 10px -3px var(--lab-glow), 0 2px 0 #0d0a0c; }
+
+/* Map: dashed route from an at-risk source to its suggested alternative */
+.wc-map .alt-link { fill: none; stroke: var(--lab); stroke-width: 1.8; stroke-dasharray: 7 5; stroke-linecap: round; }
+.wc-map .alt-link-glow { fill: none; stroke: var(--lab-glow); stroke-width: 6; opacity: 0.5; }
+.wc-map .alt-km { font: 600 10.5px var(--font-mono); fill: var(--lab); }
+
+@keyframes wc-fresh { from { background: color-mix(in srgb, var(--lab) 22%, transparent); } to { background: transparent; } }
+.wc-fresh { animation: wc-fresh 2.4s ease-out 1; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }

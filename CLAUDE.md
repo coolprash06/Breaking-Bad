@@ -12,20 +12,23 @@ Deadline: **17 Nov 2026, 12:00 PM**. Full requirements: `prd.txt`. Real vs simul
 - No secrets in code. Use `.env.local` (gitignored); `.env.example` has names only.
 
 ## Stack
-Next.js 16.4 (App Router; read `node_modules/next/dist/docs/` before using Next APIs), React 19.3, TypeScript, Tailwind 4, Recharts, Vitest, tsx, Twilio SDK. three.js + React Three Fiber (globe), d3-geo (projections). Leaflet removed: no third-party tiles.
+Next.js 16.4 (App Router; read `node_modules/next/dist/docs/` before using Next APIs), React 19.3, TypeScript, Tailwind 4, Recharts, Vitest, tsx. three.js + React Three Fiber (globe), d3-geo (projections). Leaflet removed: no third-party tiles.
 
 ## Architecture
 - One data layer, one forecast engine, four "lenses" (purpose tabs). Tabs change highlighting, panel content and message style only.
 - `src/lib/sim/`: seeded generator (seed 20261116) -> `data/simulated/*.json` (`npm run generate`). `_truth.json` is hidden ground truth, read only by tests.
 - `src/lib/data/store.ts`: every dataset travels in a `Dataset<T>` with `provenance: "REAL" | "SIMULATED"`. Real data drops into `data/real/`.
 - `src/lib/forecast/`: weighted ridge regression with sign constraints learns per-source parameters; 500-run Monte Carlo ensemble gives P10-P90 band and time-to-failure.
-- `src/lib/alerts/`: tiers (safe/watch/warning/emergency + nodata), 2-of-3 signal agreement, 3-day persistence, reasons.
-- API: `/api/sources`, `/api/forecast/[id]`, `/api/alerts`. Routes: `/`, `/login` (placeholder + Try demo), `/panchayat`, `/dev/data`.
+- `src/lib/alerts/`: tiers (safe/watch/warning/emergency + nodata), 2-of-3 signal agreement, 3-day persistence, reasons (each with a short EN/HI `sms` form). `nearest.ts` (haversine, suitability per need), `warnings.ts` (persona templates EN + HI, fitted to 2 SMS), `dispatch.ts` (escalation-only, dedupe `sourceId|tier`).
+- `src/lib/sms/segments.ts`: GSM-7 160/153 vs UCS-2 70/67 segment counter.
+- API: `/api/sources`, `/api/forecast/[id]` (`cut_pump=0.3` scenario), `/api/alerts`, `POST /api/dispatch {asOf, sent}` (stateless; client keeps sent keys). Routes: `/`, `/login` (placeholder + Try demo), `/panchayat`, `/dev/data`.
+- Main screen (`src/components/`): `dashboard/` (Header + batch clock, PurposeTabs, PersonaPanel, SourceReadout "lab readout", DispatchLog, ProvenanceFooter), `map/` (MapStage, Globe, FlatMap, RiskMarker), `phone/BasicPhone`.
 - Demo timeline: start 2025-11-17, demo "today" 2026-11-16, end 2027-01-11. Locations are illustrative.
 
 ## Status
-- Done: Phase 0 (scaffold), Phase 1 (simulated data + data layer), Phase 2 (learned forecast + alert engine), Phase 3 (main screen: `src/components/dashboard/*`, `src/components/map/*`; persona warnings + nearest safe source in `src/lib/alerts/warnings.ts`, `nearest.ts`).
-- Next: Phase 4 (SMS via Twilio + simulated phone screen, reusing `personaWarning`), Phase 5 (Panchayat actions/escalation, polish, judges' notes).
+- Done: Phase 0 (scaffold), 1 (simulated data + data layer), 2 (learned forecast + alert engine), 3 (main screen, design v2, globe + SoI map with fly-in, clustering, glitch markers, 4 tabs, persona panel, lab readout, nearest safe source, alternatives #19-#28), 4 (persona warnings EN/HI + simulated basic phone + dispatch log + field replies).
+- Phase 4 decisions: NO real SMS (UAE TDRA / India DLT sender registration impossible before deadline). Twilio removed; delivery is simulated and labelled SIMULATED. Field personas get Hindi by default, officers English; phone toggles. Every template x source x tier must fit 2 SMS in both languages (tested). Demo-day warnings are the dispatch baseline; Reset restores it. Clicking a suggested alternative keeps the at-risk source selected (warning pinned) and draws a dashed route with distance; "Open <alt>" selects the alternative.
+- Next: Phase 5 (Panchayat actions/escalation to MLA/MP, polish, final judges' notes).
 
 ## Design system v2 (approved 16 Nov 2026)
 - Mood matches the login page: purple-black/maroon base, neon lab-green glow (highlights only), dusk amber accent, sand/cream text. Light mode = "desert daylight". Theme: system default, toggle in header, saved in localStorage (try/catch).
