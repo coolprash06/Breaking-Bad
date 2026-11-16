@@ -12,7 +12,7 @@ Deadline: **17 Nov 2026, 12:00 PM**. Full requirements: `prd.txt`. Real vs simul
 - No secrets in code. Use `.env.local` (gitignored); `.env.example` has names only.
 
 ## Stack
-Next.js 16.4 (App Router; read `node_modules/next/dist/docs/` before using Next APIs), React 19.3, TypeScript, Tailwind 4, Recharts, Vitest, tsx, Twilio SDK. Leaflet is installed but Phase 3 replaces third-party tiles (see Design).
+Next.js 16.4 (App Router; read `node_modules/next/dist/docs/` before using Next APIs), React 19.3, TypeScript, Tailwind 4, Recharts, Vitest, tsx, Twilio SDK. three.js + React Three Fiber (globe), d3-geo (projections). Leaflet removed: no third-party tiles.
 
 ## Architecture
 - One data layer, one forecast engine, four "lenses" (purpose tabs). Tabs change highlighting, panel content and message style only.
@@ -24,13 +24,13 @@ Next.js 16.4 (App Router; read `node_modules/next/dist/docs/` before using Next 
 - Demo timeline: start 2025-11-17, demo "today" 2026-11-16, end 2027-01-11. Locations are illustrative.
 
 ## Status
-- Done: Phase 0 (scaffold), Phase 1 (simulated data + data layer), Phase 2 (learned forecast + alert engine).
-- Next: Phase 3 main screen (header + batch clock, 4 purpose tabs, persona panel, globe/map, source readout, provenance footer). Then Phases 4-5 (warnings/SMS, Panchayat, polish, judges' notes).
-- Design system for Phase 3: preview pending approval (see below).
+- Done: Phase 0 (scaffold), Phase 1 (simulated data + data layer), Phase 2 (learned forecast + alert engine), Phase 3 (main screen: `src/components/dashboard/*`, `src/components/map/*`; persona warnings + nearest safe source in `src/lib/alerts/warnings.ts`, `nearest.ts`).
+- Next: Phase 4 (SMS via Twilio + simulated phone screen, reusing `personaWarning`), Phase 5 (Panchayat actions/escalation, polish, judges' notes).
 
-## Design (Phase 3, pending approval)
+## Design system v2 (approved 16 Nov 2026)
 - Mood matches the login page: purple-black/maroon base, neon lab-green glow (highlights only), dusk amber accent, sand/cream text. Light mode = "desert daylight". Theme: system default, toggle in header, saved in localStorage (try/catch).
 - Fonts via next/font: Bebas Neue (display), JetBrains Mono (labels + all numbers), Inter (body), Noto Sans Devanagari (Hindi).
 - Risk colours are fixed and never the theme green: Safe teal-cyan circle ✓, Watch yellow triangle !, Warning orange diamond !, Emergency red octagon ✕, No data grey dashed circle ?. Confidence = opacity / dashed ring + printed label ("~5 wk · 70%").
-- Map: official Survey of India boundary (DataMeet `india-soi.geojson` + state boundaries), simplified with mapshaper. No OSM/CARTO tiles. Globe (react-three-fiber, lazy, capped DPR, idle pause, 2D fallback) + flat MAP view; control box: GLOBE|MAP top-left, ZOOM IN/OUT/RESET bottom-right.
+- Map: `public/geo/*` (DataMeet SoI outline CC BY-SA 2.5/ODbL, SoI state lines CC BY 4.0, Natural Earth land); provenance in `public/geo/README.md`. No OSM/CARTO tiles. Globe (R3F, lazy, DPR <= 1.5, frameloop demand, slow-frame/WebGL-loss fallback to 2D) + flat MAP (SVG, d3-geo). Control box: GLOBE|MAP top-left, ZOOM IN/OUT/RESET bottom-right.
+- Nearest safe source: haversine; herders only animal-capable, households only drinkable public types; honest "none within X km" message.
 - Themed labels always carry the plain meaning: "LAB READOUT · Source details". Warnings and numbers stay plain.

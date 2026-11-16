@@ -12,6 +12,8 @@
 | Daily sensor readings between measurements | SIMULATED | Daily water balance: rain recharge, heat-driven evaporation, usage by category, aquifer drift, noise |
 | Usage by persona category | SIMULATED | Households, animal-equivalents, pump-hours; seasonal (rabi pumping, summer herding) plus events |
 | Sensor failures and gaps | SIMULATED | Random 1-7 day gaps, a 16-day outage, one dead sensor (Well #16), rare glitches |
+| India and state boundaries | REAL | DataMeet / Survey of India (see Map data below) |
+| World land (globe) | REAL | Natural Earth 1:110m |
 
 All simulated data comes from one seeded generator (`npm run generate`, seed 20261116), so it is identical on every run. The REAL data drop-in point is `data/real/` (see its README). Each source's true physical parameters are kept in a hidden file that the app never reads. Tests use it to check that the model learns those parameters from the readings.
 
@@ -46,11 +48,24 @@ Locations are **illustrative** placeholders until the team confirms districts an
    - **Agreement:** a source goes above Watch only if at least 2 of 3 independent signals agree (level falling, no rain for 30+ days, vegetation browning).
    - **Persistence:** a tier must hold for 3 consecutive days before the alert escalates, and for 3 days before it steps back down. A level already at failure escalates immediately.
    - Every alert states its confidence and its reasons.
+5. **Nearest safe source (F5).** Every field warning names the nearest *Safe* source that suits that person, using straight-line (haversine) distance between source coordinates:
+   - herders: only sources marked animal-capable, within 25 km
+   - households and travellers: only drinkable source types that people already draw from (not open ponds or wetlands, not private farm borewells), within 8 km for households, 30 km for travellers, 40 km for tankers
+   - Grey (no data) and at-risk sources are never suggested.
+   - If nothing suitable is in range, the warning says so and gives the distance to the closest option, for example: "No safe water for animals found within 25 km. The closest is Well #7, 315 km away. Contact the Panchayat."
 
 ## Demo login
 
 `/login` is a placeholder for the team's existing login page. Click **Try demo (Panchayat)**.
 
+## Map data and credits
+
+No third-party map tiles are used: their borders differ from India's official boundary. The globe and map are drawn only from these files (details in `public/geo/README.md`):
+
+- India outline: [`india-soi.geojson`](https://github.com/datameet/maps/blob/master/Country/india-soi.geojson) by the [DataMeet India community](http://datameet.org/), from Census 2011 / Survey of India data. Licence **CC BY-SA 2.5 / ODbL** (stated in the repo's `Country/README.md`). Our simplified copy is shared under the same terms.
+- State lines: [`Survey-of-India-Index-Maps/Boundaries/India-States`](https://github.com/datameet/maps/tree/master/Survey-of-India-Index-Maps/Boundaries) by DataMeet. No file-specific licence, so the repository default **CC BY 4.0** applies.
+- World land: Natural Earth 1:110m (public domain), via the `world-atlas` package.
+
 ## Open-source tools used
 
-Next.js, React, TypeScript, Tailwind CSS, Leaflet, react-leaflet, OpenStreetMap tiles, Recharts, Vitest, tsx, Twilio SDK.
+Next.js, React, TypeScript, Tailwind CSS, three.js, React Three Fiber, d3-geo, Recharts, Vitest, tsx, Twilio SDK. Fonts (Google Fonts via `next/font`): Bebas Neue, JetBrains Mono, Inter, Noto Sans Devanagari. mapshaper (via `npx`) was used once to simplify the boundary files.

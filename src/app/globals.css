@@ -1,46 +1,233 @@
 @import "tailwindcss";
 
+/*
+ * WellCast design system v2 (approved 16 Nov 2026).
+ * Dark-first: purple-black / maroon base, lab-green for interface focus only,
+ * dusk amber accent, sand text. Light = desert daylight.
+ * Risk colours are fixed in both modes and never the theme green.
+ */
 :root {
-  --background: #faf7f2;
-  --foreground: #1f1b16;
-  --panel: #ffffff;
-  --muted: #6b6359;
-  --border: #e4ddd2;
+  color-scheme: dark;
+  --bg0: #0b0810;
+  --bg1: #170d18;
+  --bg2: #2c1222;
+  --panel: #140d18;
+  --panel2: #1c1220;
+  --line: #33243a;
+  --line2: #4a3550;
+  --text: #efe5d3;
+  --muted: #a8998d;
+  --faint: #7d6e7d;
+  --lab: #3cf07a;
+  --lab-glow: rgba(60, 240, 122, 0.45);
+  --amber: #d58a4f;
+  --amber-soft: rgba(213, 138, 79, 0.16);
+  --sea: #09070d;
+  --land: #241a22;
+  --india: #2a1c24;
+  --india-line: #3cf07a;
+  --state-line: #6b4e5d;
+  --mark-ink: #0d080c;
+  --mark-ring: rgba(239, 229, 211, 0.9);
+  --grain: 0.05;
 
-  /* Risk tiers (F1): colour = risk only */
-  --risk-safe: #2e9e5b;
-  --risk-watch: #e0b400;
-  --risk-warning: #f07c1e;
-  --risk-emergency: #d6303a;
-  --risk-nodata: #9a9a9a;
+  /* Risk: fixed in both modes */
+  --risk-safe: #25b9d8;
+  --risk-watch: #f4c21b;
+  --risk-warning: #ff7a1f;
+  --risk-emergency: #e8293f;
+  --risk-nodata: #948b9a;
+
+  /* Legacy names used by /login, /panchayat, /dev pages */
+  --background: var(--bg0);
+  --foreground: var(--text);
+  --border: var(--line);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg0: #f6ead7;
+    --bg1: #efd9bb;
+    --bg2: #e7c19c;
+    --panel: #fbf4ea;
+    --panel2: #f4e8d6;
+    --line: #dcc5a6;
+    --line2: #c6a782;
+    --text: #2a171d;
+    --muted: #6f5a4f;
+    --faint: #8f7a6b;
+    --lab: #0f8f47;
+    --lab-glow: rgba(15, 143, 71, 0.25);
+    --amber: #b4561b;
+    --amber-soft: rgba(180, 86, 27, 0.12);
+    --sea: #ead7bd;
+    --land: #e2c8a6;
+    --india: #f8eedf;
+    --india-line: #0f8f47;
+    --state-line: #b08b6e;
+    --mark-ink: #140b0f;
+    --mark-ring: rgba(20, 11, 15, 0.75);
+    --grain: 0.03;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg0: #f6ead7;
+  --bg1: #efd9bb;
+  --bg2: #e7c19c;
+  --panel: #fbf4ea;
+  --panel2: #f4e8d6;
+  --line: #dcc5a6;
+  --line2: #c6a782;
+  --text: #2a171d;
+  --muted: #6f5a4f;
+  --faint: #8f7a6b;
+  --lab: #0f8f47;
+  --lab-glow: rgba(15, 143, 71, 0.25);
+  --amber: #b4561b;
+  --amber-soft: rgba(180, 86, 27, 0.12);
+  --sea: #ead7bd;
+  --land: #e2c8a6;
+  --india: #f8eedf;
+  --india-line: #0f8f47;
+  --state-line: #b08b6e;
+  --mark-ink: #140b0f;
+  --mark-ring: rgba(20, 11, 15, 0.75);
+  --grain: 0.03;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg0);
+  --color-foreground: var(--text);
   --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
   --color-muted: var(--muted);
-  --color-border: var(--border);
+  --color-faint: var(--faint);
+  --color-border: var(--line);
+  --color-line2: var(--line2);
+  --color-lab: var(--lab);
+  --color-amber: var(--amber);
   --color-risk-safe: var(--risk-safe);
   --color-risk-watch: var(--risk-watch);
   --color-risk-warning: var(--risk-warning);
   --color-risk-emergency: var(--risk-emergency);
   --color-risk-nodata: var(--risk-nodata);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-bebas), "Arial Narrow", Impact, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, Consolas, monospace;
+  --font-sans: var(--font-inter), system-ui, "Segoe UI", sans-serif;
+  --font-hindi: var(--font-devanagari), "Nirmala UI", Mangal, sans-serif;
 }
 
+html {
+  background: var(--bg0);
+}
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  color: var(--text);
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(120% 70% at 50% 110%, var(--bg2) 0%, var(--bg1) 45%, var(--bg0) 80%) fixed,
+    var(--bg0);
+}
+/* Static film grain: never animated, very low opacity. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--grain);
+  z-index: 60;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+:focus-visible {
+  outline: 2px solid var(--lab);
+  outline-offset: 2px;
 }
 
-/* SIMULATED data badge: striped so it is never mistaken for REAL */
+/* ---------- Shared pieces ---------- */
+.wc-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lab);
+}
+.wc-label em {
+  font-style: normal;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--muted);
+}
+.wc-btn {
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+}
+.wc-btn:hover:not(:disabled) {
+  border-color: var(--lab);
+  color: var(--lab);
+}
+.wc-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.wc-btn-primary {
+  border-color: var(--lab);
+  color: var(--lab);
+  box-shadow: 0 0 16px -6px var(--lab-glow);
+}
+.wc-glow {
+  color: var(--lab);
+  text-shadow: 0 0 18px var(--lab-glow);
+}
+.wc-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.wc-ctl {
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+.wc-ctl button {
+  font: 500 11px/1 var(--font-mono);
+  letter-spacing: 0.14em;
+  cursor: pointer;
+}
+
+/* SIMULATED badge: striped so it is never mistaken for REAL */
 .badge-simulated {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    #fde9c8 0 6px,
-    #fbd9a0 6px 12px
-  );
+  border: 1px dashed var(--amber);
+  color: var(--amber);
+  background-image: repeating-linear-gradient(-45deg, var(--amber-soft) 0 5px, transparent 5px 10px);
+}
+.badge-real {
+  border: 1px solid var(--lab);
+  color: var(--lab);
+}
+
+/* Flat map */
+.wc-map .graticule { fill: none; stroke: var(--line); stroke-width: 0.6; stroke-dasharray: 2 4; }
+.wc-map .land { fill: var(--land); }
+.wc-map .india { fill: var(--india); stroke: var(--india-line); stroke-width: 1.2; filter: drop-shadow(0 0 5px var(--lab-glow)); }
+.wc-map .state { fill: none; stroke: var(--state-line); stroke-width: 0.8; stroke-dasharray: 3 3; }
+.wc-map .reg { font: 28px var(--font-display); letter-spacing: 0.3em; fill: var(--text); opacity: 0.16; }
+.wc-map .place { font: 10px var(--font-mono); fill: var(--muted); letter-spacing: 0.06em; }
+.wc-map .glab { font: 9.5px var(--font-mono); fill: var(--faint); }
+.wc-map .mk-l { font: 600 10.5px var(--font-mono); fill: var(--text); paint-order: stroke; stroke: var(--sea); stroke-width: 3px; }
+.wc-map .mk-c { font: 10px var(--font-mono); fill: var(--muted); paint-order: stroke; stroke: var(--sea); stroke-width: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
 }
