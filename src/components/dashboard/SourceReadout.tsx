@@ -12,6 +12,96 @@ import { RISK_UI, RiskIcon, RiskPill, shortConfidence } from "@/components/map/R
 import { PERSONAS } from "@/config/personas";
 import { formatKm } from "@/lib/alerts/nearest";
 import type { DispatchMessage, FieldReply } from "@/lib/alerts/dispatch";
+import type { RealView } from "@/lib/real/view";
+import { GW_CATEGORY_UI } from "@/lib/real/view";
+
+const fmtMonth = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
+
+/** REAL context around a source: CGWB GWRA 2025 district figures, nearest block, nearest CGWB well, monsoon. */
+function GroundwaterCard({ source, real }: { source: SourceView; real: RealView }) {
+  const ctx = real.sources[source.id];
+  const g = real.gwra;
+  if (!ctx || !g) return null;
+  const d = g.districts[ctx.gwDistrict];
+  const stage = GW_CATEGORY_UI[d.stageCategory].label;
+  const phalodi = source.district === "phalodi";
+  const m = ctx.monsoon;
+  const blocks = [
+    d.counts.over_exploited ? `${d.counts.over_exploited} OE` : null,
+    d.counts.critical ? `${d.counts.critical} C` : null,
+    d.counts.semi_critical ? `${d.counts.semi_critical} SC` : null,
+    d.counts.safe ? `${d.counts.safe} Safe` : null,
+    d.counts.saline ? `${d.counts.saline} saline` : null,
+  ].filter(Boolean);
+  let note: string;
+  if (!ctx.groundwaterFed) note = "Surface / rain-fed source: the regional aquifer decline does not apply to it.";
+  else if (d.impliedDeclineMPerYr > 0)
+    note = `This over-draft sets the background decline of this source: about ${(d.impliedDeclineMPerYr * 100).toFixed(1)} cm a year (gap / recharge area / specific yield ${g.specificYield}, our assumption).`;
+  else note = "The district takes less than it recharges, so no regional decline is added to this source.";
+  if (phalodi) note += " Phalodi is reported under Jodhpur in GWRA 2025.";
+  if (d.salinityUnits.length > 0) note += ` Salinity-affected units in the district: ${d.salinityUnits.join(", ")}.`;
+  return (
+    <>
+      <div className="wc-label">
+        Groundwater context <em>· {d.name} district, real figures</em>
+      </div>
+      <div className="wc-card grid gap-2 p-3 font-mono text-[12px]">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 tabular-nums">
+          <dt className="text-muted">Stage of extraction</dt>
+          <dd className="text-right">
+            <span className="font-semibold">{d.stagePct.toFixed(1)}%</span> · {stage}
+          </dd>
+          <dt className="text-muted">Annual recharge</dt>
+          <dd className="text-right">{Math.round(d.rechargeMcm)} million m³</dd>
+          <dt className="text-muted">Annual extraction</dt>
+          <dd className="text-right">{Math.round(d.extractionMcm)} million m³</dd>
+          <dt className="text-muted">{d.gapMcm > 0 ? "Over-draft" : "Headroom"}</dt>
+          <dd className="text-right">
+            {Math.abs(Math.round(d.gapMcm))} million m³/yr {d.gapMcm > 0 ? "over" : "under"} the usable resource
+          </dd>
+          <dt className="text-muted">Blocks</dt>
+          <dd className="text-right">
+            {blocks.join(" · ")} of {d.unitsTotal}
+          </dd>
+          {ctx.block && (
+            <>
+              <dt className="text-muted">Nearest block HQ</dt>
+              <dd className="text-right">
+                {ctx.block.label} ({ctx.block.km} km) · {GW_CATEGORY_UI[ctx.block.category].label}
+                {ctx.block.stagePct !== null ? ` · ${ctx.block.stagePct}%` : ""}
+              </dd>
+            </>
+          )}
+        </dl>
+        <p className="text-[11px] leading-snug text-muted">{note}</p>
+        {(m || ctx.refWell) && (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-t border-border pt-2 tabular-nums">
+            {m && (
+              <>
+                <dt className="text-muted">Monsoon {m.year}</dt>
+                <dd className="text-right">
+                  {m.actualMm} mm · {m.departurePct >= 0 ? `+${m.departurePct}` : m.departurePct}% vs normal
+                </dd>
+              </>
+            )}
+            {ctx.refWell && (
+              <>
+                <dt className="text-muted">CGWB well</dt>
+                <dd className="text-right">
+                  {ctx.refWell.name} ({ctx.refWell.km} km): water {ctx.refWell.lastDepthM.toFixed(1)} m down, {fmtMonth(ctx.refWell.lastDate)}
+                </dd>
+              </>
+            )}
+          </dl>
+        )}
+        <div className="flex flex-wrap items-center gap-1.5 text-[10.5px] leading-snug text-muted">
+          <DataBadge provenance="REAL" /> CGWB GWRA 2025 · ERA5 rain (normal = ERA5 1991-2020) · CGWB wells
+        </div>
+      </div>
+    </>
+  );
+}
 
 interface Detail {
   asOf: string;
@@ -118,6 +208,8 @@ interface ReadoutProps {
   /** Warnings sent for this source, and replies from its users. */
   sent: DispatchMessage[];
   replies: FieldReply[];
+  /** REAL reference context (CGWB, ERA5); null when not cached. */
+  real?: RealView | null;
 }
 
 /** Pinned strip: the at-risk source stays selected while its alternative is shown on the map. */
@@ -146,7 +238,7 @@ function AltStrip({ alt, onOpenAlt, onClearAlt }: Pick<ReadoutProps, "onOpenAlt"
   );
 }
 
-export default function SourceReadout({ source, asOf, alt, onOpenAlt, onClearAlt, sent, replies }: ReadoutProps) {
+export default function SourceReadout({ source, asOf, alt, onOpenAlt, onClearAlt, sent, replies, real }: ReadoutProps) {
   const key = source ? `${source.id}|${asOf}` : "";
   const [detail, setDetail] = useState<{ key: string; d: Detail | null; error: string | null }>({ key: "", d: null, error: null });
 
@@ -230,9 +322,18 @@ export default function SourceReadout({ source, asOf, alt, onOpenAlt, onClearAlt
           )}
         </dl>
         <div className="flex flex-wrap items-center gap-2 font-mono text-[10.5px] text-muted">
-          <DataBadge provenance={d?.provenance.readings ?? "SIMULATED"} /> readings · location illustrative
+          <DataBadge provenance={d?.provenance.readings ?? "SIMULATED"} /> level readings (no public daily data for village sources)
+          {real?.climate && (
+            <>
+              {" · "}
+              <DataBadge provenance="REAL" /> rain &amp; evaporation (ERA5)
+            </>
+          )}
+          {" · location illustrative"}
         </div>
       </div>
+
+      {real && <GroundwaterCard source={source} real={real} />}
 
       <div className="wc-label">
         Who uses it <em>· By purpose</em>

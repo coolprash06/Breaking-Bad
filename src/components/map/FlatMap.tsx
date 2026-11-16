@@ -15,6 +15,16 @@ import { THAR_KUTCH_FRAME } from "@/lib/geo/boundaries";
 import type { SourceView } from "@/lib/view";
 import { RISK_UI, RiskShape, shortConfidence } from "./RiskMarker";
 import { clusterMarkers, SEVERITY } from "./cluster";
+import type { GwraBlockView, WellView } from "@/lib/real/view";
+import { BlockLayer, WellLayer } from "./RealLayers";
+
+/** REAL reference layers the map can show under the risk markers. */
+export interface MapOverlays {
+  blocks: GwraBlockView[] | null;
+  wells: WellView[] | null;
+  selectedWell: string | null;
+  onWell(code: string): void;
+}
 
 export interface ZoomApi {
   zoomIn(): void;
@@ -41,6 +51,7 @@ interface Props {
   isRelevant(s: SourceView): boolean;
   apiRef: RefObject<MapApi | null>;
   link: MapLink | null;
+  overlays?: MapOverlays;
 }
 
 interface View {
@@ -58,7 +69,7 @@ const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 
 /** Zoom steps used to decide when to re-cluster (about every 26% of zoom). */
 const bucketOf = (k: number) => Math.round(Math.log2(k) * 3);
 
-export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant, apiRef, link }: Props) {
+export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant, apiRef, link, overlays }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<SVGGElement>(null);
   const scaleBarRef = useRef<SVGPathElement>(null);
@@ -322,6 +333,10 @@ export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant
           <g ref={worldRef} style={{ ["--inv" as string]: 1 }}>
             <StaticLayer graticule={base.graticule} land={base.land} india={base.india} states={base.states} />
             <RegionLabels at={base.at} />
+            {overlays?.blocks && <BlockLayer at={base.at} blocks={overlays.blocks} />}
+            {overlays?.wells && (
+              <WellLayer at={base.at} wells={overlays.wells} selectedCode={overlays.selectedWell} onWell={overlays.onWell} />
+            )}
             {link && <LinkLayer at={base.at} sources={sources} link={link} />}
             <MarkerLayer
               at={base.at}

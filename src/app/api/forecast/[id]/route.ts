@@ -7,6 +7,7 @@ import { isGroundwaterLagged } from "@/lib/forecast/features";
 import { compareScenario } from "@/lib/forecast/scenario";
 import { parseUsageCut } from "@/lib/api/params";
 import { addDays } from "@/lib/time";
+import { climateFor } from "@/lib/types";
 
 const HISTORY_DAYS = 120;
 
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/forecast/[id
   const n = snap.length;
   const glitches = new Set(fc.model.glitchIdx);
   const from = Math.max(0, n - HISTORY_DAYS);
-  const rain = snap.climate.data.districts[source.district].rainMm;
+  const rain = climateFor(snap.climate.data, source).rainMm;
   const values = snap.readings.data[source.id].values;
   const history = [];
   for (let i = from; i < n; i++) {

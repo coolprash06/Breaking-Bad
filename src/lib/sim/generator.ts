@@ -15,6 +15,14 @@
  *
  * Messy-data features: sensor noise, random gaps, long outages, a dead sensor,
  * rare spikes, cloudy NDVI scenes, and usage "reported" with its own error.
+ *
+ * REAL drivers (when data/real/ has them, see scripts/fetch-real.ts):
+ *  - rain[t] and PET[t] are the REAL daily ERA5 rainfall and FAO-56 reference
+ *    evapotranspiration at the source's own coordinates (Open-Meteo);
+ *  - groundwater-fed sources (dug wells, borewells, stepwells) get the REAL
+ *    district background decline from CGWB GWRA 2025 (extraction minus extractable
+ *    resource) added to their drift.
+ * The level of each village source itself stays SIMULATED: no public daily data exists.
  */
 import type {
   ClimateData,
@@ -29,7 +37,9 @@ import type {
   UsageData,
   WaterSource,
 } from "@/lib/types";
-import { USAGE_CATEGORIES } from "@/lib/types";
+import { USAGE_CATEGORIES, climateFor } from "@/lib/types";
+import { GWRA_DISTRICT_OF } from "@/lib/real/types";
+import type { RealInputs } from "./realInputs";
 import { addDays, daysBetween, monthOf, toUtcMs } from "@/lib/time";
 import { generateClimate, round } from "./climate";
 import { laggedRain } from "@/lib/data/series";
@@ -111,6 +121,8 @@ export interface SourceTruth {
   rechargePerMm: number;
   evapPerMmPet: number;
   driftPerDay: number;
+  /** Part of driftPerDay set by the REAL CGWB district decline (m/day, <= 0). */
+  regionalDriftPerDay: number;
   ratePerUnit: Record<UsageCategory, number>;
   processSd: number;
   sensorSd: number;
@@ -168,10 +180,25 @@ function anchorToTarget(
 
 const OBSERVATION_DATES =["2026-01-10", "2026-05-10", "2026-08-20", "2026-11-10"];
 
-export function generateAll(seed = DEFAULT_SEED): GeneratedData {
+/** Source types that draw on the regional aquifer, so they feel its background decline. */
+export function isGroundwaterFed(type: SourceType): boolean {
+  return type === "dug_well" || type === "borewell" || type === "stepwell";
+}
+
+/** REAL background decline (m/day, <= 0) for a source, from the CGWB GWRA district gap. */
+export function regionalDrift(spec: Pick<SourceSpec, "type" | "district">, real: RealInputs): number {
+  if (!real.gwra || !isGroundwaterFed(spec.type)) return 0;
+  const d = real.gwra.districts[GWRA_DISTRICT_OF[spec.district]];
+  return d ? -d.impliedDeclineMPerYr / 365 : 0;
+}
+
+export function generateAll(seed = DEFAULT_SEED, real: RealInputs = {}): GeneratedData {
   const tl = buildTimeline();
   const demoIdx = daysBetween(tl.start, tl.demoDate);
   const climate = generateClimate(tl, seed);
+  if (real.climate && real.climate.data.start !== tl.start) {
+    throw new Error(`REAL climate starts ${real.climate.data.start}, timeline starts ${tl.start}`);
+  }
 
   const sources: WaterSource[] = [];
   const readings: ReadingsData = {};
@@ -181,10 +208,13 @@ export function generateAll(seed = DEFAULT_SEED): GeneratedData {
   const truth: Record<string, SourceTruth> = {};
 
   for (const spec of SOURCE_SPECS) {
-    const clim = climate.districts[spec.district];
+    const clim = real.climate ? climateFor(real.climate.data, spec) : climate.districts[spec.district];
+    if (clim.rainMm.length < tl.days) throw new Error(`climate for ${spec.id} is shorter than the timeline`);
     const rng = rngFor(seed, `source:${spec.id}`);
     const rates = ratePerUnit(spec);
     const evapPerMm = spec.hidden.evapFactor / 1000;
+    const regional = regionalDrift(spec, real);
+    const driftPerDay = spec.hidden.driftPerDay + regional;
 
     // ---- usage: true (drives physics) and reported (what the model sees) ----
     const base = baseUsageSeries(spec, tl);
@@ -202,7 +232,7 @@ export function generateAll(seed = DEFAULT_SEED): GeneratedData {
     // ---- daily level change, split into a rain term and everything else ----
     const lossDelta = new Array<number>(tl.days).fill(0);
     for (let i = 1; i < tl.days; i++) {
-      let d = -evapPerMm * clim.petMm[i] + spec.hidden.driftPerDay + rng.normal(0, spec.hidden.processSd);
+      let d = -evapPerMm * clim.petMm[i] + driftPerDay + rng.normal(0, spec.hidden.processSd);
       for (const c of USAGE_CATEGORIES) d -= rates[c] * trueUsage[c][i];
       lossDelta[i] = d;
     }
@@ -308,7 +338,8 @@ export function generateAll(seed = DEFAULT_SEED): GeneratedData {
     truth[spec.id] = {
       rechargePerMm,
       evapPerMmPet: evapPerMm,
-      driftPerDay: spec.hidden.driftPerDay,
+      driftPerDay,
+      regionalDriftPerDay: regional,
       ratePerUnit: rates,
       processSd: spec.hidden.processSd,
       sensorSd: spec.sensorSd,
@@ -324,15 +355,17 @@ export function generateAll(seed = DEFAULT_SEED): GeneratedData {
       provenance: sim,
       title: "Water sources",
       source: "Seeded generator (src/lib/sim/specs.ts)",
-      note: "18 sources across Thar and Kutch. Locations are illustrative placeholders.",
+      note: `${sources.length} sources across Thar and Kutch. Locations are illustrative placeholders.`,
       data: sources,
     },
     readings: {
       id: "readings",
       provenance: sim,
       title: "Daily sensor readings",
-      source: "Seeded generator: water balance + sensor noise",
-      note: "Daily level between quarterly measurements, with gaps, outages, a dead sensor and rare glitches.",
+      source: real.climate
+        ? "Seeded generator: water balance driven by REAL rainfall / evaporation (ERA5) and REAL district groundwater decline (CGWB GWRA 2025), + sensor noise"
+        : "Seeded generator: water balance + sensor noise",
+      note: "Daily level of each village source (no public daily data exists for these), with gaps, outages, a dead sensor and rare glitches.",
       data: readings,
     },
     usage: {

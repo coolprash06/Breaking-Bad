@@ -1,0 +1,840 @@
+{
+ "title": "National Compilation on Dynamic Ground Water Resources of India, 2025",
+ "publisher": "Central Ground Water Board (CGWB), Department of Water Resources, RD & GR, Ministry of Jal Shakti, Government of India",
+ "url": "https://www.jalshakti-dowr.gov.in/static/uploads/2025/11/711d8d476bbf498cd90f8038e7371227.pdf",
+ "published": "2025-11",
+ "retrieved": "2026-11-16",
+ "specificYield": 0.05,
+ "districts": {
+  "barmer": {
+   "key": "barmer",
+   "name": "Barmer",
+   "state": "Rajasthan",
+   "rechargeHam": 38583.18,
+   "naturalDischargeHam": 3699.68,
+   "extractableHam": 34883.49,
+   "extraction": {
+    "irrigationHam": 39038.61,
+    "industrialHam": 438,
+    "domesticHam": 7441.06,
+    "totalHam": 46917.66
+   },
+   "stagePct": 134.5,
+   "stageCategory": "over_exploited",
+   "rechargeAreaKm2": 28578.58,
+   "unitsTotal": 17,
+   "gapHam": 12034.17,
+   "impliedDeclineMPerYr": 0.084,
+   "pages": {
+    "resources": 194,
+    "area": 344,
+    "units": 242
+   }
+  },
+  "jaisalmer": {
+   "key": "jaisalmer",
+   "name": "Jaisalmer",
+   "state": "Rajasthan",
+   "rechargeHam": 10682.52,
+   "naturalDischargeHam": 1068.25,
+   "extractableHam": 9614.27,
+   "extraction": {
+    "irrigationHam": 26772.72,
+    "industrialHam": 7.07,
+    "domesticHam": 4163.1,
+    "totalHam": 30942.89
+   },
+   "stagePct": 321.84,
+   "stageCategory": "over_exploited",
+   "rechargeAreaKm2": 38145,
+   "unitsTotal": 4,
+   "gapHam": 21328.62,
+   "impliedDeclineMPerYr": 0.112,
+   "pages": {
+    "resources": 194,
+    "area": 344,
+    "units": 242
+   }
+  },
+  "bikaner": {
+   "key": "bikaner",
+   "name": "Bikaner",
+   "state": "Rajasthan",
+   "rechargeHam": 31327.94,
+   "naturalDischargeHam": 3132.79,
+   "extractableHam": 28195.15,
+   "extraction": {
+    "irrigationHam": 29146.3,
+    "industrialHam": 71,
+    "domesticHam": 10417.7,
+    "totalHam": 39635.01
+   },
+   "stagePct": 140.57,
+   "stageCategory": "over_exploited",
+   "rechargeAreaKm2": 30381.77,
+   "unitsTotal": 8,
+   "gapHam": 11439.86,
+   "impliedDeclineMPerYr": 0.075,
+   "pages": {
+    "resources": 194,
+    "area": 344,
+    "units": 242
+   }
+  },
+  "jodhpur": {
+   "key": "jodhpur",
+   "name": "Jodhpur",
+   "state": "Rajasthan",
+   "rechargeHam": 41729.55,
+   "naturalDischargeHam": 3651.05,
+   "extractableHam": 38078.5,
+   "extraction": {
+    "irrigationHam": 80593.17,
+    "industrialHam": 677.58,
+    "domesticHam": 15817.12,
+    "totalHam": 97087.88
+   },
+   "stagePct": 254.97,
+   "stageCategory": "over_exploited",
+   "rechargeAreaKm2": 22189.72,
+   "unitsTotal": 17,
+   "gapHam": 59009.38,
+   "impliedDeclineMPerYr": 0.532,
+   "pages": {
+    "resources": 194,
+    "area": 344,
+    "units": 242
+   }
+  },
+  "kachchh": {
+   "key": "kachchh",
+   "name": "Kachchh",
+   "state": "Gujarat",
+   "rechargeHam": 98586.09,
+   "naturalDischargeHam": 8670.23,
+   "extractableHam": 89915.86,
+   "extraction": {
+    "irrigationHam": 44383.5,
+    "industrialHam": 1076.96,
+    "domesticHam": 1107.09,
+    "totalHam": 46567.54
+   },
+   "stagePct": 51.79,
+   "stageCategory": "safe",
+   "rechargeAreaKm2": 20491.36,
+   "unitsTotal": 10,
+   "gapHam": -43348.32,
+   "impliedDeclineMPerYr": 0,
+   "pages": {
+    "resources": 179,
+    "area": 327,
+    "units": 225
+   }
+  }
+ },
+ "blocks": [
+  {
+   "name": "Mandvi",
+   "label": "Mandvi",
+   "district": "kachchh",
+   "category": "semi_critical",
+   "stagePct": 77.45,
+   "previous": {
+    "category": "critical",
+    "stagePct": 90.09
+   },
+   "salinityAffected": false,
+   "point": {
+    "lat": 22.8328,
+    "lon": 69.3524,
+    "matched": "Māndvi, Kutch"
+   },
+   "page": 371
+  },
+  {
+   "name": "Bhuj",
+   "label": "Bhuj",
+   "district": "kachchh",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 23.254,
+    "lon": 69.6693,
+    "matched": "Bhuj, Kutch"
+   },
+   "page": 371
+  },
+  {
+   "name": "Chohtan",
+   "label": "Chohtan",
+   "district": "barmer",
+   "category": "semi_critical",
+   "stagePct": 70.23,
+   "previous": {
+    "category": "safe",
+    "stagePct": 67.86
+   },
+   "salinityAffected": false,
+   "point": null,
+   "page": 384
+  },
+  {
+   "name": "Gudhamalani",
+   "label": "Gudhamalani",
+   "district": "barmer",
+   "category": "critical",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": null,
+   "page": 384
+  },
+  {
+   "name": "Sheo",
+   "label": "Sheo",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.1911,
+    "lon": 71.2444,
+    "matched": "Shiv, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Patodi",
+   "label": "Patodi",
+   "district": "barmer",
+   "category": "semi_critical",
+   "stagePct": 88,
+   "previous": {
+    "category": "critical",
+    "stagePct": 92.67
+   },
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.083,
+    "lon": 72.2741,
+    "matched": "Patodi, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Dhanaoo",
+   "label": "Dhanaoo",
+   "district": "barmer",
+   "category": "critical",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.2367,
+    "lon": 71.1346,
+    "matched": "Dhanaoo, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Barmer",
+   "label": "Barmer",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.7457,
+    "lon": 71.3921,
+    "matched": "Bārmer, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Kalyanpur",
+   "label": "Kalyanpur",
+   "district": "barmer",
+   "category": "semi_critical",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.0249,
+    "lon": 72.5832,
+    "matched": "Kalyānpur, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Gadraroad",
+   "label": "Gadraroad",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.7442,
+    "lon": 70.6423,
+    "matched": "Gadra Road, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Samdari",
+   "label": "Samdari",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.813,
+    "lon": 72.5788,
+    "matched": "Samdari, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Serwa",
+   "label": "Serwa",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": null,
+   "page": 384
+  },
+  {
+   "name": "Baytoo",
+   "label": "Baytoo",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": null,
+   "page": 384
+  },
+  {
+   "name": "Siwana",
+   "label": "Siwana",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.6515,
+    "lon": 72.4224,
+    "matched": "Siwāna, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Dhorimanna",
+   "label": "Dhorimanna",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.2037,
+    "lon": 71.4369,
+    "matched": "Dhorīmanna, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Gira",
+   "label": "Gira",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.1079,
+    "lon": 71.9089,
+    "matched": "Gira, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Balotra",
+   "label": "Balotra",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.8324,
+    "lon": 72.24,
+    "matched": "Balotra, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Sindhari",
+   "label": "Sindhari",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.5669,
+    "lon": 71.925,
+    "matched": "Sindari, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Ramsar",
+   "label": "Ramsar",
+   "district": "barmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 25.7289,
+    "lon": 70.8728,
+    "matched": "Ramsar, Bārmer District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Panchoo",
+   "label": "Panchoo",
+   "district": "bikaner",
+   "category": "semi_critical",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 27.5009,
+    "lon": 73.2099,
+    "matched": "Panchun, Bīkāner District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Dungargarh",
+   "label": "Dungargarh",
+   "district": "bikaner",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 28.0962,
+    "lon": 74.0087,
+    "matched": "Sri Dūngargarh, Bīkāner District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Nokha",
+   "label": "Nokha",
+   "district": "bikaner",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 28.122,
+    "lon": 72.9685,
+    "matched": "Nokha, Bīkāner District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Bikaner_Rural",
+   "label": "Bikaner (rural)",
+   "district": "bikaner",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 28.0176,
+    "lon": 73.315,
+    "matched": "Bikaner, Bīkāner District"
+   },
+   "page": 384
+  },
+  {
+   "name": "Sankra",
+   "label": "Sankra",
+   "district": "jaisalmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.7331,
+    "lon": 71.584,
+    "matched": "Sānkra, Jaisalmer"
+   },
+   "page": 385
+  },
+  {
+   "name": "Jaisalmer_Urban",
+   "label": "Jaisalmer (urban)",
+   "district": "jaisalmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.9176,
+    "lon": 70.9039,
+    "matched": "Jaisalmer, Jaisalmer"
+   },
+   "page": 385
+  },
+  {
+   "name": "Sam",
+   "label": "Sam",
+   "district": "jaisalmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.8287,
+    "lon": 70.5056,
+    "matched": "Sām, Jaisalmer"
+   },
+   "page": 385
+  },
+  {
+   "name": "Jaisalmer_Rural",
+   "label": "Jaisalmer (rural)",
+   "district": "jaisalmer",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.9176,
+    "lon": 70.9039,
+    "matched": "Jaisalmer, Jaisalmer"
+   },
+   "page": 385
+  },
+  {
+   "name": "Jodhpur_Urban",
+   "label": "Jodhpur (urban)",
+   "district": "jodhpur",
+   "category": "semi_critical",
+   "stagePct": 82.28,
+   "previous": {
+    "category": "critical",
+    "stagePct": 94.26
+   },
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.2684,
+    "lon": 73.0059,
+    "matched": "Jodhpur, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Luni",
+   "label": "Luni",
+   "district": "jodhpur",
+   "category": "critical",
+   "stagePct": 95.48,
+   "previous": {
+    "category": "semi_critical",
+    "stagePct": 89.24
+   },
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.0037,
+    "lon": 73.0059,
+    "matched": "Lūni Junction, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Shekhala",
+   "label": "Shekhala",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": null,
+   "page": 386
+  },
+  {
+   "name": "Tiwari",
+   "label": "Tiwari",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": null,
+   "page": 386
+  },
+  {
+   "name": "Balesar",
+   "label": "Balesar",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.3941,
+    "lon": 72.4901,
+    "matched": "Balesar, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Phalodi",
+   "label": "Phalodi",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 27.131,
+    "lon": 72.3683,
+    "matched": "Phalodi, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Bap",
+   "label": "Bap",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 27.3766,
+    "lon": 72.3519,
+    "matched": "Bāp, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Shergarh",
+   "label": "Shergarh",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.3284,
+    "lon": 72.2963,
+    "matched": "Shergarh, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Dechoo",
+   "label": "Dechoo",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.7749,
+    "lon": 72.3309,
+    "matched": "Dechu, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Osian",
+   "label": "Osian",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.7272,
+    "lon": 72.9102,
+    "matched": "Osiān, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Bapini",
+   "label": "Bapini",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.9948,
+    "lon": 72.9862,
+    "matched": "Bapini, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Bhopalgarh",
+   "label": "Bhopalgarh",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.647,
+    "lon": 73.4901,
+    "matched": "Bhopālgarh, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Lohawat",
+   "label": "Lohawat",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.9821,
+    "lon": 72.5799,
+    "matched": "Lohāwat, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Mandor_Rural",
+   "label": "Mandor (rural)",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.3486,
+    "lon": 73.0441,
+    "matched": "Mandor, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Baori",
+   "label": "Baori",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": null,
+   "page": 386
+  },
+  {
+   "name": "Bilara",
+   "label": "Bilara",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.1807,
+    "lon": 73.7055,
+    "matched": "Bilāra, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Pipar City",
+   "label": "Pipar City",
+   "district": "jodhpur",
+   "category": "over_exploited",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": false,
+   "point": {
+    "lat": 26.3844,
+    "lon": 73.5439,
+    "matched": "Pīpār, Jodhpur"
+   },
+   "page": 386
+  },
+  {
+   "name": "Gandhidham (C)",
+   "label": "Gandhidham",
+   "district": "kachchh",
+   "category": "saline",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": true,
+   "point": {
+    "lat": 23.0833,
+    "lon": 70.1333,
+    "matched": "Gāndhīdhām, Kutch"
+   },
+   "page": 411
+  },
+  {
+   "name": "Khajuwala",
+   "label": "Khajuwala",
+   "district": "bikaner",
+   "category": "saline",
+   "stagePct": null,
+   "previous": null,
+   "salinityAffected": true,
+   "point": {
+    "lat": 28.7063,
+    "lon": 72.5924,
+    "matched": "Khajuwala, Bīkāner District"
+   },
+   "page": 420
+  },
+  {
+   "name": "Bhachau",
+   "label": "Bhachau",
+   "district": "kachchh",
+   "category": "safe",
+   "stagePct": 55.52,
+   "previous": {
+    "category": "critical",
+    "stagePct": 96.02
+   },
+   "salinityAffected": false,
+   "point": {
+    "lat": 23.2986,
+    "lon": 70.3428,
+    "matched": "Bhachāu, Kutch"
+   },
+   "page": 451
+  }
+ ],
+ "notes": [
+  "District figures: table 'Ground water resources availability, utilization and stage of extraction (as in 2025)'. Volumes in hectare-metres (ham); 1 ham = 10,000 m3.",
+  "Block categories: chapter 'Categorization of assessment units, 2025' (semi-critical, critical, over-exploited are named; Safe units are only counted) and the national list of Saline assessment units.",
+  "Block stage of extraction (%) is printed only for blocks whose category changed between 2024 and 2025.",
+  "Phalodi became a district in 2023; GWRA 2025 still reports the Phalodi block under Jodhpur district.",
+  "impliedDeclineMPerYr = max(0, extraction - extractable resource) / (recharge-worthy area x specific yield 0.05). The specific yield is our assumption, not a CGWB figure.",
+  "Block points are block HQ towns geocoded with the Open-Meteo geocoding API (GeoNames, CC BY 4.0), not block boundaries."
+ ]
+}

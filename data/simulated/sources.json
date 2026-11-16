@@ -3,7 +3,7 @@
   "provenance": "SIMULATED",
   "title": "Water sources",
   "source": "Seeded generator (src/lib/sim/specs.ts)",
-  "note": "18 sources across Thar and Kutch. Locations are illustrative placeholders.",
+  "note": "28 sources across Thar and Kutch. Locations are illustrative placeholders.",
   "data": [
     {
       "id": "TH-01",

@@ -1,6 +1,7 @@
 import Dashboard from "@/components/dashboard/Dashboard";
 import { buildSourcesPayload } from "@/lib/api/sourcesView";
 import { buildDispatch } from "@/lib/api/dispatchView";
+import { getRealView } from "@/lib/real/context";
 
 /**
  * Main screen: header + batch clock, 4 purpose tabs, personas | globe/map | source readout,
@@ -12,7 +13,7 @@ export default function Home() {
   const { messages } = buildDispatch(initial.asOf, []);
   return (
     <main className="flex-1">
-      <Dashboard initial={initial} initialDispatch={messages} />
+      <Dashboard initial={initial} initialDispatch={messages} real={getRealView()} />
     </main>
   );
 }

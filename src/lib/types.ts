@@ -120,9 +120,35 @@ export interface DistrictClimate {
   petMm: number[];
 }
 
+/** Where a day of REAL climate comes from (see scripts/real/openMeteo.ts). */
+export type ClimateOrigin = "era5" | "recent" | "forecast" | "analogue";
+
+export interface MonsoonSummary {
+  year: number;
+  /** June-September rain total (mm). */
+  actualMm: number;
+  /** Long-term June-September mean (mm). */
+  normalMm: number;
+  /** (actual - normal) / normal, %. */
+  departurePct: number;
+}
+
 export interface ClimateData {
   start: string;
   districts: Record<DistrictId, DistrictClimate>;
+  /** Per-source series at each source's own coordinates (REAL data). Preferred over districts. */
+  sources?: Record<string, DistrictClimate>;
+  /** Origin of each day (REAL data only). */
+  origin?: ClimateOrigin[];
+  segments?: { origin: ClimateOrigin; from: string; to: string }[];
+  /** Monsoon total vs normal at each source (REAL data only). */
+  monsoon?: Record<string, MonsoonSummary>;
+  monsoonNormal?: { kind: string; months: string };
+}
+
+/** Climate series for one source: its own coordinates when available, else its district. */
+export function climateFor(c: ClimateData, source: { id: string; district: DistrictId }): DistrictClimate {
+  return c.sources?.[source.id] ?? c.districts[source.district];
 }
 
 export interface NdviPoint {

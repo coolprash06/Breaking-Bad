@@ -6,20 +6,76 @@
 
 | Dataset | Status | Source / method |
 |---|---|---|
-| Groundwater levels (quarterly) | SIMULATED (to be replaced by REAL CGWB / India-WRIS) | 4 manual measurements a year for wells, borewells and stepwells |
-| Rainfall and temperature (daily) | SIMULATED (to be replaced by REAL CHIRPS / IMD) | Deficit 2026 monsoon with early withdrawal (no rain since early Sep), rare winter showers |
-| NDVI around sources | SIMULATED (optional REAL Sentinel-2) | Every 5 days, follows soil moisture; cloudy scenes skipped |
-| Daily sensor readings between measurements | SIMULATED | Daily water balance: rain recharge, heat-driven evaporation, usage by category, aquifer drift, noise |
+| Rainfall, temperature, evaporation (daily, at every source) | **REAL** | ERA5 reanalysis (Copernicus / ECMWF) via the Open-Meteo archive, 17 Nov 2025 to 10 Nov 2026; 11-16 Nov from the Open-Meteo forecast API (`past_days`). Evaporation = FAO-56 reference ET0. CC BY 4.0 |
+| Monsoon 2026 vs normal | **REAL** | June-September 2026 total vs the ERA5 1991-2020 mean at each source (not the IMD normal, see below) |
+| District groundwater balance (recharge, extraction, stage of extraction) | **REAL** | CGWB *National Compilation on Dynamic Ground Water Resources of India, 2025* (Ministry of Jal Shakti), parsed from the official PDF |
+| Block categories (Safe / Semi-critical / Critical / Over-exploited / Saline) | **REAL** | Same compilation: categorisation chapter, national saline-units list, 2024-to-2025 change tables |
+| Reference observation wells (depth to water, 2014 to Jan 2024) | **REAL** | 16 CGWB wells near our sources, via India-WRIS on the India Data Portal |
+| Daily level of each village source (sensor readings) | SIMULATED, driven by REAL inputs | Daily water balance using the REAL rain and evaporation at the source and the REAL district groundwater decline, plus usage, noise and sensor gaps. No public daily data exists for individual village ponds, tankas and wells |
+| Quarterly manual measurements of our sources | SIMULATED | 4 a year for wells, borewells and stepwells (CGWB-style); the real CGWB wells are shown separately as reference |
+| NDVI around sources | SIMULATED (Sentinel-2 is the next step) | Every 5 days, follows soil moisture (now from real rain); cloudy scenes skipped |
 | Usage by persona category | SIMULATED | Households, animal-equivalents, pump-hours; seasonal (rabi pumping, summer herding) plus events |
 | Sensor failures and gaps | SIMULATED | Random 1-7 day gaps, a 16-day outage, one dead sensor (Well #16), rare glitches |
+| Days after demo day (revealed by the batch clock) | REAL forecast, then analogue | Open-Meteo 16-day forecast to 1 Dec 2026, then the same dates one year earlier from ERA5 (labelled in the data) |
 | India and state boundaries | REAL | DataMeet / Survey of India (see Map data below) |
 | World land (globe) | REAL | Natural Earth 1:110m |
 
-All simulated data comes from one seeded generator (`npm run generate`, seed 20261116), so it is identical on every run. The REAL data drop-in point is `data/real/` (see its README). Each source's true physical parameters are kept in a hidden file that the app never reads. Tests use it to check that the model learns those parameters from the readings.
+All REAL data is downloaded once by `npm run fetch-real` and cached as JSON in `data/real/` (see its README for exact sources, dates and licences), so the app never calls an external API and works offline. All simulated data comes from one seeded generator (`npm run generate`, seed 20261116), so it is identical on every run for the same cached real inputs. Each source's true physical parameters are kept in a hidden file that the app never reads. Tests use it to check that the model learns those parameters from the readings.
 
 Locations are **illustrative** placeholders until the team confirms districts and villages.
 
 There are 28 simulated sources. The 10 numbered #19 to #28 are nearby Safe alternatives, added so that every warning can name somewhere suitable to go. Each source has its own random stream, so adding them left the other 18 sources' data unchanged. One source is kept isolated on purpose: **Stepwell #6 (Phalodi)** has no suitable alternative within any persona's range. Its warning honestly says so and tells people to contact the Panchayat.
+
+## Real data and what it changed (added 16 Nov 2026)
+
+**Rain and evaporation are now real.** Every source uses the ERA5 rainfall and FAO-56 evapotranspiration at its own coordinates. So reasons like "No rain for 49 days" (Nadi #9) and "Monsoon 2026 was 22% below normal" are real statements about real weather. The real 2026 monsoon was below the ERA5 1991-2020 normal at most of our sources: -22% to -55% across Thar and most of Kutch, while near Rapar it was +36%.
+
+**District groundwater stress is real** (CGWB GWRA 2025, figures in million m3/yr):
+
+| District | Recharge | Extractable | Extraction | Stage | Gap | Decline used (m/yr) |
+|---|---|---|---|---|---|---|
+| Jaisalmer | 107 | 96 | 309 | 321.84% | +213 | 0.112 |
+| Barmer | 386 | 349 | 469 | 134.5% | +120 | 0.084 |
+| Bikaner | 313 | 282 | 396 | 140.57% | +114 | 0.075 |
+| Jodhpur | 417 | 381 | 971 | 254.97% | +590 | 0.532 |
+| Kachchh | 986 | 899 | 466 | 51.79% | -433 | 0.000 |
+
+- The gap (extraction minus extractable resource) is turned into a background water-table decline by dividing by the recharge-worthy area and a **specific yield of 0.05**. That specific yield is our assumption, not a CGWB number. The decline is added only to sources that draw on the regional aquifer: dug wells, borewells and stepwells. Ponds, tankas and beris don't get it.
+- Phalodi became a district in 2023, but GWRA 2025 still reports the Phalodi block under Jodhpur, so Stepwell #6 uses Jodhpur's figures (stage 255%, the steepest decline).
+- Kachchh as a whole extracts less than it recharges (52%), so no regional decline is added there, even though Bhuj block is Over-exploited.
+
+**Cross-check against real wells.** Pre-monsoon trends of the CGWB reference wells (m/yr, positive = water table falling):
+- Jaisalmer: MOOLSAGAR +0.09, Moolsagar_Pz +0.36
+- Barmer: SASION-KA-KUA +0.05, BARMER1 -0.20
+- Jodhpur: Lordiya n/a, BAP1 +0.12
+- Bikaner: KARMISAR -0.13, DESHNOKH +1.04
+- Kachchh: Khavada +0.31, Khavda +0.53, Bhuj (Circuit House) +0.62, Madhapar -0.06, Rapar2 +1.00, Lilpur +0.06, Lakhpat -0.43, Moti cher -1.10
+
+Point wells vary a lot. One Bikaner well falls 1 m/yr while another rises. Most Kutch wells are falling despite the district-level surplus. So the district decline we use is a conservative, regional background term, not a forecast for any single well.
+
+**Map layers.** Two map layers can be switched on (top-left, MAP view):
+- **CGWB blocks**: each named assessment unit at its block HQ town, with its 2025 category. Safe units are counted but not named in the compilation. Seven block towns could not be geocoded and are listed in the legend.
+- **CGWB wells**: click a well for its depth-to-water history.
+
+The source readout adds a "Groundwater context" card with the district's real figures, the nearest listed block, the 2026 monsoon vs normal and the nearest CGWB well.
+
+**What had to change to keep the demo story.** No scenario events were changed. Two demo-day target levels were lowered, because the real (dry) Jaisalmer rainfall cannot refill them as high: Tanka #2 from 1.90 to 1.85 m, and Beri #3 from 0.90 to 0.85 m. The demo story holds:
+- Nadi #9 is Warning on demo day, and the herder is sent to Well #22 (4 km).
+- Well #4 goes Safe to Warning after pumping restarts (+7 days).
+- Stepwell #6 is Watch on demo day and Warning from +21 days (was +14), with no suitable alternative.
+- Well #16 is grey.
+
+Side effects of the real weather:
+- Nadi #9 reaches Emergency at +3 days instead of +7.
+- Beri #3 is Safe on demo day (was Watch).
+- Virda #11 and Borewell #18 start at Watch.
+
+**Not used, and why.**
+- INGRES (block-level GWRA with per-block recharge and extraction), India-WRIS and cgwb.gov.in did not respond from our network on 16 Nov 2026.
+- Block stage % is shown only where the national compilation prints it.
+- Groundwater quality per well (EC > 3000 uS/cm) is on those same unreachable sites. We show the compilation's salinity-affected units instead (Khajuwala in Bikaner, Gandhidham in Kachchh). None is near our sources.
+- The monsoon normal is ERA5's own 1991-2020 mean, not the IMD gridded normal. The IMD grids are binary files that would need 30 years of downloads to build a normal, and comparing ERA5 with its own normal avoids mixing datasets.
+
 
 ## How the AI works
 
@@ -90,4 +146,4 @@ No third-party map tiles are used: their borders differ from India's official bo
 
 ## Open-source tools used
 
-Next.js, React, TypeScript, Tailwind CSS, three.js, React Three Fiber, d3-geo, Recharts, Vitest, tsx. Fonts (Google Fonts via `next/font`): Bebas Neue, JetBrains Mono, Inter, Noto Sans Devanagari. mapshaper (via `npx`) was used once to simplify the boundary files.
+Next.js, React, TypeScript, Tailwind CSS, three.js, React Three Fiber, d3-geo, Recharts, Vitest, tsx, pdfjs-dist (to read the CGWB 2025 PDF in `npm run fetch-real`). Data APIs (fetch time only): Open-Meteo archive, forecast and geocoding APIs; India Data Portal CKAN datastore. Fonts (Google Fonts via `next/font`): Bebas Neue, JetBrains Mono, Inter, Noto Sans Devanagari. mapshaper (via `npx`) was used once to simplify the boundary files.

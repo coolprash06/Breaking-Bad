@@ -21,6 +21,7 @@ import type {
   ClimateData,
   DailySeries,
   Dataset,
+  DistrictClimate,
   DatasetId,
   Manifest,
   NdviData,
@@ -132,17 +133,20 @@ export function getSnapshot(requested?: string | null): DataSnapshot {
     usageSeries[id] = { fetch: cut(s.fetch), spot: cut(s.spot), pump: cut(s.pump) };
   }
 
+  const cutClimate = (c: DistrictClimate): DistrictClimate => ({
+    rainMm: cut(c.rainMm),
+    tmaxC: cut(c.tmaxC),
+    tminC: cut(c.tminC),
+    petMm: cut(c.petMm),
+  });
   const districts = {} as ClimateData["districts"];
-  for (const [d, c] of Object.entries(ALL.climate.data.districts) as [
-    keyof ClimateData["districts"],
-    ClimateData["districts"][keyof ClimateData["districts"]],
-  ][]) {
-    districts[d] = {
-      rainMm: cut(c.rainMm),
-      tmaxC: cut(c.tmaxC),
-      tminC: cut(c.tminC),
-      petMm: cut(c.petMm),
-    };
+  for (const [d, c] of Object.entries(ALL.climate.data.districts) as [keyof ClimateData["districts"], DistrictClimate][]) {
+    districts[d] = cutClimate(c);
+  }
+  let climateSources: ClimateData["sources"];
+  if (ALL.climate.data.sources) {
+    climateSources = {};
+    for (const [id, c] of Object.entries(ALL.climate.data.sources)) climateSources[id] = cutClimate(c);
   }
 
   const ndvi: NdviData = {};
@@ -160,7 +164,15 @@ export function getSnapshot(requested?: string | null): DataSnapshot {
     sources: ALL.sources,
     readings: { ...ALL.readings, data: readings },
     usage: { ...ALL.usage, data: { ...ALL.usage.data, series: usageSeries } },
-    climate: { ...ALL.climate, data: { start: ALL.climate.data.start, districts } },
+    climate: {
+      ...ALL.climate,
+      data: {
+        ...ALL.climate.data,
+        districts,
+        sources: climateSources,
+        origin: ALL.climate.data.origin ? cut(ALL.climate.data.origin) : undefined,
+      },
+    },
     ndvi: { ...ALL.ndvi, data: ndvi },
     observations: { ...ALL.observations, data: observations },
   };

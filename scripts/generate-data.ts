@@ -5,11 +5,17 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { generateAll, DEFAULT_SEED } from "../src/lib/sim/generator";
+import { loadRealInputs } from "../src/lib/sim/realInputs";
 
 const outDir = path.join(process.cwd(), "data", "simulated");
 mkdirSync(outDir, { recursive: true });
 
-const g = generateAll(DEFAULT_SEED);
+const real = loadRealInputs();
+console.log(
+  `REAL drivers: climate ${real.climate ? "yes (ERA5 / Open-Meteo)" : "no (simulated)"}, ` +
+    `groundwater decline ${real.gwra ? "yes (CGWB GWRA 2025)" : "no"}`,
+);
+const g = generateAll(DEFAULT_SEED, real);
 
 const write = (name: string, value: unknown, pretty = false) => {
   const file = path.join(outDir, name);
@@ -53,7 +59,8 @@ for (const s of g.sources.data) {
     ].join(" "),
   );
 }
-const rainTotals = Object.entries(g.climate.data.districts).map(
+const climate = real.climate?.data ?? g.climate.data;
+const rainTotals = Object.entries(climate.districts).map(
   ([d, c]) => `${d}: ${c.rainMm.slice(0, demoIdx + 1).reduce((a, b) => a + b, 0).toFixed(0)} mm`,
 );
 console.log(`\nRain over the last year: ${rainTotals.join(", ")}`);

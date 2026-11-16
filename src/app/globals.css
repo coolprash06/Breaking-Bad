@@ -229,6 +229,7 @@ body::after {
 .wc-map .place { font: 10px var(--font-mono); fill: var(--muted); letter-spacing: 0.06em; }
 .wc-map .glab { font: 9.5px var(--font-mono); fill: var(--faint); }
 .wc-map .mk-l { font: 600 10.5px var(--font-mono); fill: var(--text); paint-order: stroke; stroke: var(--sea); stroke-width: 3px; }
+.wc-map .blk-l { font: 9.5px var(--font-mono); fill: var(--muted); paint-order: stroke; stroke: var(--sea); stroke-width: 3px; }
 .wc-map .mk-c { font: 10px var(--font-mono); fill: var(--muted); paint-order: stroke; stroke: var(--sea); stroke-width: 3px; }
 
 /* Simulated basic phone (F6): a cheap candy-bar handset with a monochrome LCD.

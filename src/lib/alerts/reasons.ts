@@ -1,5 +1,5 @@
 /** Plain-language reasons behind a status ("No rain for 60 days, usage up 30%"). */
-import type { UsageCategory } from "@/lib/types";
+import type { MonsoonSummary, UsageCategory } from "@/lib/types";
 import { formatShort } from "@/lib/time";
 import type { Signals } from "./signals";
 import { SIGNAL_RULES } from "./signals";
@@ -23,6 +23,9 @@ export interface Reason {
   sms?: ReasonSms;
 }
 
+/** A monsoon this far below normal is worth stating as context (%). */
+export const MONSOON_DEFICIT_PCT = 15;
+
 const USAGE_SMS: Record<UsageCategory, { en: string; hi: string; hiUp: string }> = {
   fetch: { en: "Water drawing", hi: "पानी भरना", hiUp: "बढ़ा" },
   spot: { en: "Animal use", hi: "पशुओं का पानी", hiUp: "बढ़ा" },
@@ -36,6 +39,8 @@ export function buildReasons(args: {
   startDate: string | null;
   bandWidening: number;
   petRecent: number;
+  /** Last monsoon vs its long-term normal at this source (REAL climate only). */
+  monsoon?: MonsoonSummary | null;
 }): Reason[] {
   const { signals: s } = args;
   const out: Reason[] = [];
@@ -45,6 +50,12 @@ export function buildReasons(args: {
       text: `No rain for ${s.rain.daysSinceRain} days`,
       sms: { en: `No rain for ${s.rain.daysSinceRain} days.`, hi: `${s.rain.daysSinceRain} दिन से बारिश नहीं।` },
     });
+
+  // Context, not a trigger: a weak monsoon means less stored water going into the dry season.
+  const m = args.monsoon;
+  if (m && m.departurePct <= -MONSOON_DEFICIT_PCT) {
+    out.push({ kind: "rain", text: `Monsoon ${m.year} was ${-m.departurePct}% below normal (${m.actualMm} vs ${m.normalMm} mm)` });
+  }
 
   for (const u of s.usageChanges) {
     if (u.change === null && u.recent > 0.05) {

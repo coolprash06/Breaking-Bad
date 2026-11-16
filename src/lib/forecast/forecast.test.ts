@@ -71,7 +71,8 @@ describe("learning step (regression on past readings)", () => {
   it("reports fit quality and separates sensor noise from real variation", () => {
     for (const s of sources) {
       const m = learned[s.id];
-      expect(m.nIntervals).toBeGreaterThan(200);
+      // Sources that were really dry for months in 2025-26 (REAL rainfall) give fewer usable intervals.
+      expect(m.nIntervals, s.id).toBeGreaterThan(90);
       expect(m.sensorSd).toBeGreaterThan(0.002);
       expect(m.sensorSd).toBeLessThan(0.02);
     }

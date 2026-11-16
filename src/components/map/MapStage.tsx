@@ -9,6 +9,13 @@ import { THAR_KUTCH_FRAME } from "@/lib/geo/boundaries";
 import type { GlobeApi } from "./Globe";
 import { RISK_ORDER, RISK_UI, RiskIcon } from "./RiskMarker";
 import { useThemeKey } from "@/components/theme/useThemeKey";
+import type { RealView } from "@/lib/real/view";
+import { GW_CATEGORY_UI } from "@/lib/real/view";
+import type { GwCategory } from "@/lib/real/types";
+import { BlockGlyph, WellGlyph } from "./RealLayers";
+import WellCard from "./WellCard";
+
+const GW_LEGEND: GwCategory[] = ["safe", "semi_critical", "critical", "over_exploited", "saline"];
 
 const Globe = dynamic(() => import("./Globe"), {
   ssr: false,
@@ -66,6 +73,8 @@ interface Props {
   focus: { id: string; n: number; pairId?: string } | null;
   /** Route from an at-risk source to its suggested alternative. */
   link: MapLink | null;
+  /** REAL reference layers (CGWB blocks and observation wells). */
+  real?: RealView | null;
 }
 
 const REGION_CENTRE = {
@@ -75,7 +84,9 @@ const REGION_CENTRE = {
 /** Roughly India's box: zooming through the globe here hands off to the map. */
 const nearIndia = (lat: number, lon: number) => lat > 4 && lat < 38 && lon > 66 && lon < 99;
 
-export default function MapStage({ sources, selectedId, onSelect, isRelevant, focus, link }: Props) {
+export default function MapStage({ sources, selectedId, onSelect, isRelevant, focus, link, real }: Props) {
+  const [layers, setLayers] = useState({ blocks: false, wells: false });
+  const [wellCode, setWellCode] = useState<string | null>(null);
   const [geo, setGeo] = useState<GeoBundle | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [chosenView, setView] = useState<View>("globe");
@@ -164,6 +175,23 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
 
   const api = () => (view === "globe" ? globeApi.current : mapApi.current);
 
+  const overlays = useMemo(
+    () => ({
+      blocks: layers.blocks ? (real?.gwra?.blocks ?? null) : null,
+      wells: layers.wells ? (real?.wells?.list ?? null) : null,
+      selectedWell: wellCode,
+      onWell: setWellCode,
+    }),
+    [layers, real, wellCode],
+  );
+  const well = layers.wells && wellCode ? real?.wells?.list.find((w) => w.code === wellCode) ?? null : null;
+  const toggleLayer = (k: "blocks" | "wells") => {
+    setLayers((l) => ({ ...l, [k]: !l[k] }));
+    if (k === "wells") setWellCode(null);
+    if (view === "globe") flyIn();
+  };
+  const unplaced = real?.gwra?.blocks.filter((b) => b.lat === null).map((b) => b.label) ?? [];
+
   return (
     <div
       className="relative h-full min-h-[440px] overflow-hidden"
@@ -190,7 +218,16 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
       )}
       {geo && (
         <div className={`absolute inset-0 transition-opacity duration-[450ms] ${view === "map" ? "opacity-100" : "pointer-events-none opacity-0"}`}>
-          <FlatMap geo={geo} sources={sources} selectedId={selectedId} onSelect={onSelect} isRelevant={isRelevant} apiRef={mapApi} link={link} />
+          <FlatMap
+            geo={geo}
+            sources={sources}
+            selectedId={selectedId}
+            onSelect={onSelect}
+            isRelevant={isRelevant}
+            apiRef={mapApi}
+            link={link}
+            overlays={overlays}
+          />
         </div>
       )}
 
@@ -216,15 +253,77 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
         </span>
       </div>
 
+      {/* REAL reference layers (below the view switch) */}
+      {real && (real.gwra || real.wells) && (
+        <div className="wc-ctl absolute top-[52px] left-3 z-10 flex flex-wrap items-center gap-0.5 p-[3px]" role="group" aria-label="Real data layers">
+          <span className="px-2 font-mono text-[10px] tracking-[0.12em] text-faint">REAL</span>
+          {real.gwra && (
+            <button
+              aria-pressed={layers.blocks}
+              onClick={() => toggleLayer("blocks")}
+              title="CGWB Dynamic Ground Water Resources 2025: category of each assessment unit (block), shown at the block HQ town"
+              className={`rounded px-2.5 py-1.5 uppercase ${layers.blocks ? "text-lab" : "text-muted"}`}
+              style={layers.blocks ? { background: "color-mix(in srgb, var(--lab) 16%, transparent)" } : undefined}
+            >
+              CGWB blocks
+            </button>
+          )}
+          {real.wells && (
+            <button
+              aria-pressed={layers.wells}
+              onClick={() => toggleLayer("wells")}
+              title="Real reference wells: CGWB observation wells with their measured depth to water"
+              className={`rounded px-2.5 py-1.5 uppercase ${layers.wells ? "text-lab" : "text-muted"}`}
+              style={layers.wells ? { background: "color-mix(in srgb, var(--lab) 16%, transparent)" } : undefined}
+            >
+              CGWB wells
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Legend (top-right) */}
-      <div className="wc-ctl absolute top-3 right-3 z-10 hidden gap-1.5 px-2.5 py-2 font-mono text-[11px] sm:grid" aria-label="Risk legend">
-        {RISK_ORDER.map((t) => (
-          <span key={t} className="flex items-center gap-2">
-            <RiskIcon tier={t} size={14} />
-            {RISK_UI[t].label}
-          </span>
-        ))}
+      <div className="absolute top-3 right-3 z-10 hidden max-w-[220px] gap-2 sm:grid">
+        <div className="wc-ctl grid gap-1.5 px-2.5 py-2 font-mono text-[11px]" aria-label="Risk legend">
+          {RISK_ORDER.map((t) => (
+            <span key={t} className="flex items-center gap-2">
+              <RiskIcon tier={t} size={14} />
+              {RISK_UI[t].label}
+            </span>
+          ))}
+        </div>
+        {view === "map" && layers.blocks && real?.gwra && (
+          <div className="wc-ctl grid gap-1.5 px-2.5 py-2 font-mono text-[11px]" aria-label="CGWB block category legend">
+            <span className="text-[10px] tracking-[0.1em] text-faint">CGWB 2025 · BLOCK</span>
+            {GW_LEGEND.map((c) => (
+              <span key={c} className="flex items-center gap-2">
+                <svg width={28} height={16} viewBox="-14 -8 28 16" aria-hidden>
+                  <BlockGlyph category={c} size={0.95} />
+                </svg>
+                {GW_CATEGORY_UI[c].label}
+              </span>
+            ))}
+            <span className="text-[10px] leading-snug text-faint">
+              At block HQ town. Safe blocks are counted, not named.
+              {unplaced.length > 0 && ` Not placed: ${unplaced.join(", ")}.`}
+            </span>
+          </div>
+        )}
+        {view === "map" && layers.wells && real?.wells && (
+          <div className="wc-ctl flex items-center gap-2 px-2.5 py-2 font-mono text-[11px]">
+            <svg width={20} height={20} viewBox="-10 -10 20 20" aria-hidden>
+              <WellGlyph />
+            </svg>
+            CGWB observation well
+          </div>
+        )}
       </div>
+
+      {well && (
+        <div className="absolute bottom-12 left-3 z-20">
+          <WellCard well={well} sourceName={sources.find((s) => s.id === well.nearestSourceId)?.name ?? null} onClose={() => setWellCode(null)} />
+        </div>
+      )}
 
       {/* Zoom box (bottom-right) */}
       <div className="wc-ctl absolute right-3 bottom-3 z-10 grid" role="group" aria-label="Zoom">

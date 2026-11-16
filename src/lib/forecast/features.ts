@@ -4,14 +4,14 @@
  * and reported usage per persona category.
  */
 import type { DataSnapshot } from "@/lib/data/store";
-import type { UsageCategory, WaterSource } from "@/lib/types";
+import { climateFor, type UsageCategory, type WaterSource } from "@/lib/types";
 import { laggedRain } from "@/lib/data/series";
 import { GROUNDWATER_RAIN_LAG_DAYS } from "@/config/thresholds";
 
 export interface DailyFeatures {
   /** Rain that drives recharge for this source type (mm/day). */
   rechargeRain: number[];
-  /** Raw district rain (mm/day), for rain-deficit signals and climatology. */
+  /** Raw rain at the source (mm/day), for rain-deficit signals and climatology. */
   rain: number[];
   pet: number[];
   usage: Record<UsageCategory, number[]>;
@@ -24,7 +24,7 @@ export function isGroundwaterLagged(source: WaterSource): boolean {
 }
 
 export function buildFeatures(snap: DataSnapshot, source: WaterSource): DailyFeatures {
-  const clim = snap.climate.data.districts[source.district];
+  const clim = climateFor(snap.climate.data, source);
   const lagged = isGroundwaterLagged(source);
   const u = snap.usage.data.series[source.id];
   return {

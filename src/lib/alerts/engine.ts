@@ -149,6 +149,7 @@ export function evaluateSource(source: WaterSource, asOf?: string | null): Sourc
     startDate: fc.ensemble.start.fromIdx >= 0 ? dateAt(fc.ensemble.start.fromIdx) : null,
     bandWidening: fc.ensemble.widening.factor,
     petRecent: meanRecent(features.pet, asOfIdx, 14),
+    monsoon: snap.climate.data.monsoon?.[source.id] ?? null,
   });
 
   const confidencePct = Math.round(fc.window.confidence * 100);

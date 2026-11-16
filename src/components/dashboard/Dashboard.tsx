@@ -18,6 +18,7 @@ import MapStage from "@/components/map/MapStage";
 import BasicPhone from "@/components/phone/BasicPhone";
 import DataBadge from "@/components/common/DataBadge";
 import { RiskIcon, shortConfidence } from "@/components/map/RiskMarker";
+import type { RealView } from "@/lib/real/view";
 
 const SEVERITY: Record<DisplayTier, number> = { emergency: 0, warning: 1, nodata: 2, watch: 3, safe: 4 };
 
@@ -45,7 +46,16 @@ interface DispatchState {
 
 const NO_FRESH: ReadonlySet<string> = new Set();
 
-export default function Dashboard({ initial, initialDispatch }: { initial: SourcesPayload; initialDispatch: DispatchMessage[] }) {
+export default function Dashboard({
+  initial,
+  initialDispatch,
+  real = null,
+}: {
+  initial: SourcesPayload;
+  initialDispatch: DispatchMessage[];
+  /** REAL reference context (static; does not move with the demo clock). */
+  real?: RealView | null;
+}) {
   const [data, setData] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [clockError, setClockError] = useState<string | null>(null);
@@ -207,7 +217,7 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
             />
           </div>
           <div className="order-1 h-[58vh] min-h-[420px] md:sticky md:top-0 md:order-2 md:h-[min(780px,calc(100vh-24px))] md:min-h-[560px] md:self-start">
-            <MapStage sources={data.sources} selectedId={selectedId} onSelect={select} isRelevant={isRelevant} focus={focus} link={link} />
+            <MapStage sources={data.sources} selectedId={selectedId} onSelect={select} isRelevant={isRelevant} focus={focus} link={link} real={real} />
           </div>
 
           {/* Source readout: right column on wide screens, full row on tablets, bottom sheet on phones. */}
@@ -242,6 +252,7 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
               onClearAlt={() => setAlt(null)}
               sent={sentHere}
               replies={repliesHere}
+              real={real}
             />
           </aside>
         </div>
@@ -309,7 +320,7 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
           </div>
         </div>
 
-        <ProvenanceFooter provenance={data.provenance} />
+        <ProvenanceFooter provenance={data.provenance} real={real} />
       </section>
     </div>
   );

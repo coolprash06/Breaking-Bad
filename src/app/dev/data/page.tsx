@@ -3,6 +3,7 @@ import { sourceTypeLabel } from "@/config/sourceTypes";
 import { ILLUSTRATIVE_LOCATIONS_NOTE } from "@/config/regions";
 import DataBadge from "@/components/common/DataBadge";
 import { addDays } from "@/lib/time";
+import { climateFor } from "@/lib/types";
 import { countGapDays, daysSinceLastReading } from "@/lib/data/series";
 import { NO_DATA_GREY_DAYS } from "@/config/thresholds";
 import SourceSparkChart, { type SparkPoint } from "./SourceSparkChart";
@@ -37,7 +38,7 @@ export default function DevDataPage() {
       <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {full.sources.data.map((s) => {
           const values = full.readings.data[s.id].values;
-          const rain = full.climate.data.districts[s.district].rainMm;
+          const rain = climateFor(full.climate.data, s).rainMm;
           const obs = new Map((full.observations.data[s.id] ?? []).map((o) => [o.date, o.levelM]));
           const points: SparkPoint[] = values.map((v, i) => {
             const date = addDays(tl.start, i);

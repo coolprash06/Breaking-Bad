@@ -84,7 +84,8 @@ export const SOURCE_SPECS: SourceSpec[] = [
     placeLabel: "Household tanka cluster, Jaisalmer", lat: 26.85, lon: 70.98,
     capacityM: 3.0, failureLevelM: 0.15, animalCapable: false,
     people: { households: 12, animals: 0, farms: 0 },
-    targetLevelAtDemo: 1.9,
+    // 1.9 -> 1.85 (16 Nov): with REAL Jaisalmer rain (117 mm/yr) a full tanka cannot end higher.
+    targetLevelAtDemo: 1.85,
     baseUsage: { fetch: 12, spot: 0, pump: 0 },
     hidden: { effAreaM2: 45, rechargePerMm: 0.011, evapFactor: 0.05, driftPerDay: -0.0005, processSd: 0.0015 },
     sensorSd: 0.006,
@@ -94,7 +95,8 @@ export const SOURCE_SPECS: SourceSpec[] = [
     placeLabel: "Beri pits, north-west of Jaisalmer", lat: 27.02, lon: 70.7,
     capacityM: 1.2, failureLevelM: 0.15, animalCapable: false,
     people: { households: 10, animals: 0, farms: 0 },
-    targetLevelAtDemo: 0.9,
+    // 0.9 -> 0.85 (16 Nov): the most REAL Jaisalmer rain can refill these pits to.
+    targetLevelAtDemo: 0.85,
     baseUsage: { fetch: 10, spot: 0, pump: 0 },
     hidden: { effAreaM2: 80, rechargePerMm: 0.004, evapFactor: 0.3, driftPerDay: 0.004, processSd: 0.0015 },
     sensorSd: 0.006,
