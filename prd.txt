@@ -1,0 +1,330 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+Breaking Bytes Hackathon - Track 2: Water & Climate AI
+Project name: [TBD]
+Version: Draft 1 (16 Nov 2026)
+Status: Draft - items marked [OPEN] need a team decision
+
+======================================================================
+1. OVERVIEW
+======================================================================
+
+An AI early-warning system for water sources in western India's arid
+regions (Thar Desert in Rajasthan and Kutch in Gujarat). It predicts
+when a water source is likely to fail (run dry or degrade), says how
+confident the prediction is, and sends warnings weeks in advance to
+the people who depend on that source, in a way that fits how each
+group uses the water.
+
+One-line pitch:
+"A weather forecast for wells: warn people weeks before their water
+runs out, and tell them where to go next."
+
+======================================================================
+2. PROBLEM
+======================================================================
+
+- Villages, herders and farmers in Thar and Kutch depend on a small
+  number of water sources.
+- Today, people usually find out a source is failing only when it is
+  already dry.
+- By then the options are a long journey to another source, buying
+  tanker water, or losing livestock and crops.
+- Different people use the same source in very different ways, so
+  one generic alert does not help everyone.
+
+======================================================================
+3. GOALS (mapped to the official CORE)
+======================================================================
+
+G1. Take satellite and/or sensor data (real, public, or realistically
+    simulated) about water sources.
+G2. Predict each source's future (e.g. days until dry, expected
+    level) WITH a confidence level.
+G3. Turn the prediction into a warning people can act on, weeks
+    before the crisis.
+G4. Show the full chain working end to end:
+    data -> prediction -> warning received.
+
+Success for the demo:
+- At least one source shown going from Safe to Warning, with a
+  warning visibly received (simulated phone screen + real SMS).
+- Clear statement of which data is real and which is simulated.
+
+======================================================================
+4. USERS AND PERSONAS
+======================================================================
+
+Personas are grouped into 4 categories by HOW they use the water.
+Each category draws water at a different rate (used by the model)
+and needs a different warning (used by the alert system).
+
+CATEGORY 1 - FETCH AND CARRY AWAY
+- Women collecting household drinking/cooking water from stepwells,
+  wells, ponds and tanks
+- Water tanker operators supplying other villages
+Needs: which source is still safe and how far it is.
+
+CATEGORY 2 - USE IT ON THE SPOT
+- Herders watering livestock at the source
+- People bathing or washing clothes at the source
+- Travellers / pilgrims stopping at the source
+Needs: where to move (especially herds) and by when.
+
+CATEGORY 3 - PUMP IT OUT AT SCALE
+- Farmers using borewells / tubewells for irrigation
+Needs: how much to cut pumping to keep shared sources alive longer.
+
+CATEGORY 4 - MANAGE AND OVERSEE
+- Village Panchayat: directs farmers and citizens on water use;
+  sees all nearby sources on a dashboard
+- Escalation from Panchayat to local MLA / MP when problems are
+  beyond village level
+- District water officer (water authority managing many sources)
+- NGOs / aid agencies deciding where to send water tankers
+Needs: overview map, who is affected, and the ability to act or
+escalate.
+
+No single primary persona. The app is organised around the 4
+purpose categories (see Section 8A). Each category's screen lists
+the personas/stories under it.
+
+======================================================================
+5. WATER SOURCES IN SCOPE
+======================================================================
+
+All water sources possible in the region, including:
+- Open dug wells
+- Borewells / tubewells
+- Stepwells (baoris)
+- Village ponds (nadis)
+- Covered rainwater tanks (tankas)
+- Shallow fresh-water pits (beris in Thar, virdas in Kutch)
+  [verify these local terms before using in the pitch]
+- Oases / natural water bodies, where present
+
+Each source has a "type" field, because each type behaves
+differently (e.g. ponds depend on rain and evaporation; borewells
+depend on groundwater).
+
+======================================================================
+6. REGION
+======================================================================
+
+- Western Rajasthan (Thar Desert)
+- Kutch, Gujarat
+Specific districts / villages for the demo: [OPEN]
+
+======================================================================
+7. DATA
+======================================================================
+
+Rule: every dataset is labelled REAL or SIMULATED in the app and in
+the judges' notes.
+
+REAL (public):
+- CGWB groundwater levels via India-WRIS (observation wells, measured
+  about 4 times a year; some stations have automatic recorders)
+- Rainfall: CHIRPS (via Google Earth Engine) or IMD
+- Vegetation greenness (NDVI) around sources: Sentinel-2 (via Google
+  Earth Engine) - optional, as a supporting signal
+
+SIMULATED (clearly labelled):
+- Daily sensor readings between the real quarterly measurements
+- Usage per source, by persona category (households, herds,
+  bathing, farm pumping)
+- Sensor failures and gaps (to demonstrate messy-data handling)
+
+Simulation must be realistic: levels drop faster in summer heat and
+with heavy use, rise slightly after rare rainfall, and have gaps.
+
+======================================================================
+8A. MAIN SCREEN LAYOUT (4 PURPOSE TABS)
+======================================================================
+
+Top of the main screen: 4 tabs, one per purpose category:
+  [Fetch & Carry] [Use on Spot] [Pump at Scale] [Manage & Oversee]
+
+Clicking a tab changes the dashboard to that purpose's view.
+
+Left/main area: shared map + dashboard, changing per tab:
+- Fetch & Carry: nearest safe sources, walking distance
+- Use on Spot: herd routes, which sources can handle animals
+- Pump at Scale: farm borewells, how much pumping to cut
+- Manage & Oversee: full overview, everyone affected, escalate to
+  MLA / MP
+
+Side panel: the personas / stories under the selected purpose
+(e.g. Use on Spot -> herder, people bathing, travellers). Clicking
+a persona shows their story and the exact warning they receive.
+
+Build rule (to save time): ONE shared map, ONE shared data layer
+and ONE shared forecast engine. Tabs only change:
+- which sources are highlighted
+- the info panel content
+- the warning message style
+(One engine, four "lenses" - not four separate apps.)
+
+======================================================================
+8. FEATURES
+======================================================================
+
+MUST-HAVE (covers the core)
+
+F1. Map of water sources (Thar + Kutch)
+    - Marker colour = RISK level:
+        Green  = Safe
+        Yellow = Watch (dropping faster than usual)
+        Orange = Warning (likely to fail in weeks)
+        Red    = Emergency (act now)
+        Grey   = No recent data (sensor dead / gap)
+    - Confidence shown SEPARATELY from colour (e.g. faded vs solid
+      marker, and a label like "~5 weeks left, 70% confident")
+    - Filter by source type and by region
+
+F2. Source detail panel (on click)
+    - Level chart: past values + forecast + shaded confidence band
+    - "Likely to fail in X-Y weeks" estimate
+    - Reasons ("No rain for 60 days, usage up 30%")
+    - Who uses this source (by persona category)
+    - Which warnings have been sent and to whom
+
+F3. Forecast model
+    - Predicts future level and time until failure per source
+    - Outputs a confidence range, not a single number
+    - Uses usage by persona category as an input
+    - Model choice: [OPEN] (e.g. Prophet or Random Forest)
+
+F4. Alert engine (false-alarm vs missed-alarm balance)
+    - Tiered levels (Watch / Warning / Emergency)
+    - Persistence check: signal must hold for several readings
+    - Multiple signals must agree before escalating (e.g. level
+      dropping + no rain + vegetation browning)
+    - Confidence stated in every alert
+
+F5. Persona-specific warnings
+    - Different message per persona category, for example:
+      Cat 1: "Well #4 low. Well #7 (2 km) is safe."
+      Cat 2: "Move herds to Well #7 within 2 weeks."
+      Cat 3: "Reduce pumping 30% to keep the village well alive
+              6 more weeks."
+      Cat 4: full picture + who is affected
+    - "Nearest safe source" suggestion in every field warning
+
+F6. Warning delivery
+    - Real SMS (Twilio trial) to team phones in the demo
+    - Simulated basic-phone screen inside the web app as backup
+    - Languages: [OPEN] (e.g. Hindi, Gujarati, English)
+
+F7. Messy data handling
+    - Sensor gaps shown as Grey, never hidden
+    - Forecast widens its confidence band when data is missing
+    - Cloudy satellite images skipped, last good value used and
+      labelled
+
+F8. Panchayat dashboard (behind existing login page)
+    - Overview of all sources in their area
+    - Send directions to farmers / citizens
+    - "Escalate to MLA / MP" action with an auto-generated summary
+      of the issue
+
+SHOULD-HAVE (if time allows)
+F9.  Herder / citizen SMS replies to confirm or correct a reading
+     (e.g. reply 1 = low, 2 = fine)
+F10. Voice call alerts for people who cannot read
+F11. Backtest panel: "On past data, the model warned X weeks early,
+     with Y false alarms and Z missed alarms"
+
+NICE-TO-HAVE
+F12. Rainfall overlay on the map
+F13. Tanker routing suggestion for NGOs / aid agencies
+
+======================================================================
+9. USER ROLES AND LOGIN
+======================================================================
+
+- Field users (Categories 1-3): NO login. They only receive SMS /
+  voice warnings on basic phones.
+- Category 4 users (Panchayat, district officer, NGO): log in to
+  the dashboard using the existing login page.
+- A "Try demo" option or demo credentials for judges (put in the
+  judges' notes).
+
+======================================================================
+10. DESERT RULES (how we respect each one)
+======================================================================
+
+R1. Sparse and messy data
+    -> F7 (gaps shown, confidence widens, cloudy images skipped)
+R2. Basic phones and patchy coverage
+    -> SMS/voice only for field users, short messages, no app or
+       internet needed on their side
+R3. False alarm vs missed alarm
+    -> F4 (tiers, persistence, multi-signal agreement, stated
+       confidence) + F11 (backtest numbers) if time allows
+
+======================================================================
+11. TECH STACK
+======================================================================
+
+- Frontend: Next.js / React (existing login page)
+- Hosting: Vercel (frontend)
+- Map: [OPEN] (e.g. Leaflet + OpenStreetMap, free)
+- Backend + ML: [OPEN] (e.g. Python FastAPI)
+- Database: [OPEN]
+- SMS: Twilio trial
+- Built with Claude Code
+
+======================================================================
+12. OUT OF SCOPE (for the hackathon)
+======================================================================
+
+- Physical sensors / hardware
+- Real deployment to villages
+- Full multi-language voice system (unless F10 is reached)
+- Regions outside Thar and Kutch
+
+======================================================================
+13. DEMO PLAN (what judges see)
+======================================================================
+
+0. Walk through the 4 purpose tabs and their persona side panels.
+1. Map of Thar + Kutch with sources colour-coded.
+2. Click a source going Orange: chart, forecast band, reasons.
+3. Warnings go out: real SMS arrives on a phone + simulated screen,
+   with different messages for different persona categories.
+4. A sensor goes Grey: show how the system handles missing data.
+5. Panchayat logs in, directs farmers to cut pumping, escalates to
+   MLA / MP.
+6. About 1 minute on why we chose this angle.
+7. State clearly which data is real and which is simulated.
+
+======================================================================
+14. SUBMISSION CHECKLIST (The Dead Drop)
+======================================================================
+
+[ ] Problem locked in on the Formula tab by team leader
+[ ] GitHub repo link
+[ ] Live link (Vercel)
+[ ] Demo video (YouTube) incl. ~1 min on our angle
+[ ] Notes for judges: real vs simulated data, data sources, demo
+    login, open-source tools used
+
+======================================================================
+15. OPEN DECISIONS
+======================================================================
+
+1. Project name
+2. Specific districts / villages for the demo
+3. SMS / voice languages
+4. Forecast model
+5. Map library, backend, database
+6. Team split (who builds what)
+7. Whether stepwell / beri / virda details are verified for the pitch
+
+DECIDED
+- Deadline: 17 Nov 2026, 12:00 PM -> build must-haves (F1-F8) first
+- Real data: colleague is sourcing it; build on simulated data first
+  and swap real data in later
+- Layout: 4 purpose tabs with persona side panels (Section 8A)
+- Login page: merge later from the separate "Breaking Bad Login
+  Page" project
