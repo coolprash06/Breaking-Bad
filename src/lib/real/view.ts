@@ -3,7 +3,7 @@
  * Built once on the server from data/real/ (it does not change with the demo clock).
  */
 import type { ClimateOrigin, MonsoonSummary } from "@/lib/types";
-import type { CgwbWellReading, GwCategory, GwraDistrictKey } from "./types";
+import type { CgwbWellReading, GwCategory, GwraDistrictKey, WaterBody } from "./types";
 
 export interface GwraDistrictView {
   key: GwraDistrictKey;
@@ -69,6 +69,8 @@ export interface RealView {
     blocks: GwraBlockView[];
   } | null;
   wells: { title: string; publisher: string; url: string; retrieved: string; list: WellView[] } | null;
+  /** Sentinel-2 water area of real, named lakes. */
+  waterBodies: { title: string; source: string; retrieved: string; method: string; list: WaterBody[] } | null;
   climate: { source: string; segments: { origin: ClimateOrigin; from: string; to: string }[]; normal: string | null } | null;
   sources: Record<string, SourceRealContext>;
 }

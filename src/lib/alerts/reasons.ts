@@ -23,6 +23,11 @@ export interface Reason {
   sms?: ReasonSms;
 }
 
+/** "2026-11-05" -> "05-11" (day-month, as shown on the field screens). */
+export function ddmm(iso: string): string {
+  return `${iso.slice(8, 10)}-${iso.slice(5, 7)}`;
+}
+
 /** A monsoon this far below normal is worth stating as context (%). */
 export const MONSOON_DEFICIT_PCT = 15;
 
@@ -105,7 +110,7 @@ export function buildReasons(args: {
   if (s.ndvi.skippedCloudy > 0 && s.ndvi.latestDate) {
     out.push({
       kind: "data",
-      text: `Satellite: ${s.ndvi.skippedCloudy} cloudy image${s.ndvi.skippedCloudy > 1 ? "s" : ""} skipped, using last good value from ${formatShort(s.ndvi.latestDate)}`,
+      text: `Satellite: latest image cloudy, using last clear image ${ddmm(s.ndvi.latestDate)} (${s.ndvi.skippedCloudy} cloudy skipped)`,
     });
   }
 

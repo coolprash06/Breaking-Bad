@@ -12,9 +12,11 @@ npm run generate              # re-drive the simulated village sources with the 
 |---|---|---|---|---|
 | `climate.json` | Daily rain, Tmax/Tmin, FAO-56 reference evapotranspiration at each of the 28 sources (2025-11-17 to 2027-01-11); June-September 2026 total vs the 1991-2020 normal | ERA5 reanalysis (Copernicus C3S / ECMWF) via the [Open-Meteo](https://open-meteo.com/) historical archive; last 6 days from the Open-Meteo forecast API (`past_days`) | CC BY 4.0 (Open-Meteo); ERA5: Copernicus licence, attribution required | Registered in `index.ts` as the REAL `climate` dataset. Drives the simulated levels, the "No rain for N days" and "Monsoon was X% below normal" reasons |
 | `gwra-2025.json` | District recharge, extractable resource, extraction, stage of extraction, recharge-worthy area; block categories; blocks whose category changed (with stage %); salinity-affected and saline units | [National Compilation on Dynamic Ground Water Resources of India, 2025](https://www.jalshakti-dowr.gov.in/static/uploads/2025/11/711d8d476bbf498cd90f8038e7371227.pdf), CGWB, Ministry of Jal Shakti, Government of India | Government of India publication (public); credit CGWB / Ministry of Jal Shakti | Background groundwater decline of simulated wells, borewells and stepwells; "CGWB blocks" map layer; groundwater card in the source readout |
+| `ndvi.json` | Mean NDVI within 500 m of each source, every Sentinel-2 pass 2025-11-17 to 2026-11-16 (2805 scenes, 821 skipped as cloudy) | Copernicus Sentinel-2 L2A (ESA), via [Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a) Data API | Copernicus Sentinel data: free and open, attribution "contains modified Copernicus Sentinel data" | Registered in `index.ts` as the REAL `ndvi` dataset: the vegetation signal of the alert engine |
+| `water-bodies.json` | Open-water area (ha) of 3 named lakes over the past year | Same (NDWI) | Same; lake coordinates from Wikipedia | "Lakes · S2" map layer with a water-area chart |
 | `cgwb-wells.json` | 16 CGWB observation wells near our sources: depth to water (m below ground), ~4 a year, 2014 to Jan 2024 | CGWB / India-WRIS, "Groundwater Level Collected Manually", via the [India Data Portal](https://ckandev.indiadataportal.com/dataset/groundwater-level) datastore API | Government of India data; the portal lists the licence as "not specified": credit CGWB, India-WRIS and the India Data Portal | "CGWB wells" map layer with history chart; nearest reference well in the readout |
 
-Retrieved 16 Nov 2026.
+Retrieved 16 Nov 2026 (Sentinel-2: 16-17 Nov 2026).
 
 ## How each file is made
 
@@ -34,6 +36,16 @@ Days after demo day are only revealed by the demo batch clock. Evaporation is ER
 
 **`cgwb-wells.json`** (`scripts/real/cgwbWells.ts`). Uses CKAN `datastore_search_sql`. It picks CGWB stations with ≥ 20 readings since 2014 and one in 2022 or later, keeping the 2 closest (≤ 40 km) to each district's sources. The pre-monsoon trend is the least-squares slope of the Mar-Jun depths.
 
+**`ndvi.json` / `water-bodies.json`** (`scripts/real/sentinel.ts`). No imagery is downloaded.
+- STAC search lists every Sentinel-2 L2A scene over each point (one per date: the least cloudy tile).
+- The Planetary Computer Data API then computes statistics server-side over a small circle (~1 KB per answer).
+- Cloud: the scene classification layer (SCL) inside the circle. A scene is skipped when more than 10% is cloud, cloud shadow or cirrus (classes 3, 8, 9, 10).
+- NDVI = (B08 - B04) / (B08 + B04), NDWI = (B03 - B08) / (B03 + B08). The 1000 DN offset of processing baseline >= 04.00 is removed in the expression.
+- Water area = pixels with NDWI > 0 (10 m pixels: 100 px = 1 ha) inside a circle around the lake's published coordinate.
+- Dust and haze the cloud mask misses: a clear reading below half the median of its 3 clear neighbours on each side is flagged `haze` (raw value kept, not used).
+- Every request is cached in `cache/sentinel-stats.json`, so a re-run only fetches new scenes. A full first run takes about 6 minutes.
+- 5 of 2,810 scene checks failed on the API with HTTP 500 and are left out (they are not called cloudy).
+
 ## Not available from here
 
 - **INGRES** (`ingres.iith.ac.in`, block-level GWRA with recharge and extraction per block), **India-WRIS** and **cgwb.gov.in** did not resolve or respond from our network on 16 Nov 2026. Block-level stage % is therefore only shown where the national compilation prints it (blocks whose category changed).
@@ -41,4 +53,4 @@ Days after demo day are only revealed by the demo batch clock. Evaporation is ER
 
 ## Still SIMULATED
 
-The daily level of each village source, the usage per persona category, the sensor gaps and the NDVI. No public daily data exists for individual village ponds, tankas and wells. They are simulated with real rain, real evaporation and the real district groundwater decline as drivers.
+The daily level of each village source, the usage per persona category and the sensor gaps. No public daily data exists for individual village ponds, tankas and wells. They are simulated with real rain, real evaporation and the real district groundwater decline as drivers.

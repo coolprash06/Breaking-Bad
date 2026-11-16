@@ -16,7 +16,8 @@ import type { SourceView } from "@/lib/view";
 import { RISK_UI, RiskShape, shortConfidence } from "./RiskMarker";
 import { clusterMarkers, SEVERITY } from "./cluster";
 import type { GwraBlockView, WellView } from "@/lib/real/view";
-import { BlockLayer, WellLayer } from "./RealLayers";
+import { BlockLayer, LakeLayer, WellLayer } from "./RealLayers";
+import { overlaps, type Box, type OccupiedLayout } from "./boxes";
 
 /** REAL reference layers the map can show under the risk markers. */
 export interface MapOverlays {
@@ -24,6 +25,9 @@ export interface MapOverlays {
   wells: WellView[] | null;
   selectedWell: string | null;
   onWell(code: string): void;
+  lakes: { id: string; name: string; lat: number; lon: number; latestHa: number | null }[] | null;
+  selectedLake: string | null;
+  onLake(id: string): void;
 }
 
 export interface ZoomApi {
@@ -120,6 +124,12 @@ export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant
       states: path(geo.stateLines) ?? "",
     };
   }, [size, geo]);
+
+  const altId = link?.toId ?? null;
+  const layout = useMemo(
+    () => (base ? layoutSources({ at: base.at, sources, selectedId, altId, isRelevant, bucket }) : null),
+    [base, sources, selectedId, altId, isRelevant, bucket],
+  );
 
   const clamp = useCallback(
     (v: View): View => {
@@ -333,18 +343,32 @@ export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant
           <g ref={worldRef} style={{ ["--inv" as string]: 1 }}>
             <StaticLayer graticule={base.graticule} land={base.land} india={base.india} states={base.states} />
             <RegionLabels at={base.at} />
-            {overlays?.blocks && <BlockLayer at={base.at} blocks={overlays.blocks} />}
-            {overlays?.wells && (
-              <WellLayer at={base.at} wells={overlays.wells} selectedCode={overlays.selectedWell} onWell={overlays.onWell} />
+            {overlays?.blocks && layout && <BlockLayer at={base.at} blocks={overlays.blocks} layout={layout} />}
+            {overlays?.wells && layout && (
+              <WellLayer
+                at={base.at}
+                wells={overlays.wells}
+                layout={layout}
+                selectedCode={overlays.selectedWell}
+                onWell={overlays.onWell}
+              />
+            )}
+            {overlays?.lakes && layout && (
+              <LakeLayer
+                at={base.at}
+                lakes={overlays.lakes}
+                layout={layout}
+                selectedId={overlays.selectedLake}
+                onLake={overlays.onLake}
+              />
             )}
             {link && <LinkLayer at={base.at} sources={sources} link={link} />}
-            <MarkerLayer
-              at={base.at}
+            {layout && <MarkerLayer
+              layout={layout}
               sources={sources}
               selectedId={selectedId}
               altId={link?.toId ?? null}
               isRelevant={isRelevant}
-              bucket={bucket}
               onSelect={(id) => {
                 onSelect(id);
                 const p = sourcePos(id);
@@ -361,7 +385,7 @@ export default function FlatMap({ geo, sources, selectedId, onSelect, isRelevant
                 const k = Math.max(view.current.k * 1.8, 36 / Math.max(minD, 0.5));
                 animateTo({ k, cx, cy }, 650);
               }}
-            />
+            />}
           </g>
           <g pointerEvents="none" transform={`translate(16 ${size.h - 40})`}>
             <path ref={scaleBarRef} fill="none" stroke="var(--text)" strokeWidth={1.4} />
@@ -441,81 +465,96 @@ interface Placed {
   lead: SourceView; // most severe member
 }
 
-interface LayerProps {
+export interface SourceLayout extends OccupiedLayout {
+  /** Representative zoom of this cluster step. */
+  k: number;
+  placed: Placed[];
+  labels: { id: string; x: number; y: number; dx: number; dy: number; anchor: "start" | "end" | "middle"; name: string; sub: string }[];
+}
+
+/** Clusters and labels for the source markers at one zoom step (shared with the REAL layers). */
+function layoutSources(args: {
   at: At;
+  sources: SourceView[];
+  selectedId: string | null;
+  altId: string | null;
+  isRelevant(s: SourceView): boolean;
+  bucket: number;
+}): SourceLayout {
+  const { at, sources, selectedId, altId, isRelevant, bucket } = args;
+  const k = Math.pow(2, bucket / 3); // representative zoom for this step
+  const r = CLUSTER_PX / k; // cluster radius in projected px
+  const pos = new Map(sources.map((s) => [s.id, at(s.lon, s.lat)]));
+  const order = [...sources].sort(
+    (a, b) =>
+      Number(b.id === selectedId) - Number(a.id === selectedId) ||
+      Number(b.id === altId) - Number(a.id === altId) ||
+      Number(isRelevant(b)) - Number(isRelevant(a)) ||
+      SEVERITY[a.status.tier] - SEVERITY[b.status.tier],
+  );
+  // The selected source seeds first; the cluster icon is always its most urgent member.
+  const byId = new Map(sources.map((s) => [s.id, s]));
+  const groups = clusterMarkers(
+    order.map((s) => ({ id: s.id, x: pos.get(s.id)![0], y: pos.get(s.id)![1], tier: s.status.tier })),
+    r,
+  );
+  const placed: Placed[] = groups.map((g) => ({
+    kind: g.ids.length === 1 ? "one" : "cluster",
+    ids: g.ids,
+    x: g.x,
+    y: g.y,
+    lead: byId.get(g.leadId)!,
+  }));
+  const has = (p: Placed, id: string | null) => !!id && p.ids.includes(id);
+
+  // Labels: selected + alerting relevant singles. Try right, left, below; drop if
+  // the box would cover another marker or label (screen px at this zoom step).
+  const boxes: Box[] = placed.map((p) => ({
+    x0: p.x * k - (p.kind === "cluster" ? 18 : 13),
+    y0: p.y * k - 13,
+    x1: p.x * k + (p.kind === "cluster" ? 24 : 13),
+    y1: p.y * k + 13,
+  }));
+  const labels: SourceLayout["labels"] = [];
+  const want = placed.filter(
+    (p) => has(p, selectedId) || has(p, altId) || (p.kind === "one" && isRelevant(p.lead) && p.lead.status.tier !== "safe"),
+  );
+  const rank = (p: Placed) => (has(p, selectedId) ? 2 : has(p, altId) ? 1 : 0);
+  want.sort((a, b) => rank(b) - rank(a));
+  for (const p of want) {
+    const name = p.lead.name;
+    const sub = p.kind === "cluster" ? `${shortConfidence(p.lead.status)} · +${p.ids.length - 1} nearby` : shortConfidence(p.lead.status);
+    const w = Math.max(name.length * 6.6, sub.length * 6.1) + 4;
+    const sx = p.x * k;
+    const sy = p.y * k;
+    const pad = p.kind === "cluster" ? 22 : 15;
+    const options = [
+      { dx: pad, dy: -2, anchor: "start" as const, box: { x0: sx + 13, y0: sy - 14, x1: sx + 15 + w, y1: sy + 14 } },
+      { dx: -pad, dy: -2, anchor: "end" as const, box: { x0: sx - pad - w, y0: sy - 14, x1: sx - 13, y1: sy + 14 } },
+      { dx: 0, dy: 26, anchor: "middle" as const, box: { x0: sx - w / 2, y0: sy + 14, x1: sx + w / 2, y1: sy + 40 } },
+    ];
+    const hit = (b: Box) => boxes.some((o) => overlaps(b, o));
+    const ok = options.find((o) => !hit(o.box)) ?? (rank(p) > 0 ? options[0] : null);
+    if (!ok) continue;
+    boxes.push(ok.box);
+    labels.push({ id: p.lead.id, x: p.x, y: p.y, dx: ok.dx, dy: ok.dy, anchor: ok.anchor, name, sub });
+  }
+  return { k, placed, labels, occupied: boxes, points: placed.map((p) => ({ x: p.x, y: p.y })) };
+}
+
+interface LayerProps {
+  layout: SourceLayout;
   sources: SourceView[];
   selectedId: string | null;
   /** Suggested alternative: always its own marker, ringed and labelled. */
   altId: string | null;
   isRelevant(s: SourceView): boolean;
-  bucket: number;
   onSelect(id: string): void;
   onCluster(ids: string[]): void;
 }
 
 /** Re-renders only when the data, selection, tab or cluster step changes. */
-const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, altId, isRelevant, bucket, onSelect, onCluster }: LayerProps) {
-  const layout = useMemo(() => {
-    const k = Math.pow(2, bucket / 3); // representative zoom for this step
-    const r = CLUSTER_PX / k; // cluster radius in projected px
-    const pos = new Map(sources.map((s) => [s.id, at(s.lon, s.lat)]));
-    const order = [...sources].sort(
-      (a, b) =>
-        Number(b.id === selectedId) - Number(a.id === selectedId) ||
-        Number(b.id === altId) - Number(a.id === altId) ||
-        Number(isRelevant(b)) - Number(isRelevant(a)) ||
-        SEVERITY[a.status.tier] - SEVERITY[b.status.tier],
-    );
-    // The selected source seeds first; the cluster icon is always its most urgent member.
-    const byId = new Map(sources.map((s) => [s.id, s]));
-    const groups = clusterMarkers(
-      order.map((s) => ({ id: s.id, x: pos.get(s.id)![0], y: pos.get(s.id)![1], tier: s.status.tier })),
-      r,
-    );
-    const placed: Placed[] = groups.map((g) => ({
-      kind: g.ids.length === 1 ? "one" : "cluster",
-      ids: g.ids,
-      x: g.x,
-      y: g.y,
-      lead: byId.get(g.leadId)!,
-    }));
-    const has = (p: Placed, id: string | null) => !!id && p.ids.includes(id);
-
-    // Labels: selected + alerting relevant singles. Try right, left, below; drop if
-    // the box would cover another marker or label (screen px at this zoom step).
-    const boxes: { x0: number; y0: number; x1: number; y1: number }[] = placed.map((p) => ({
-      x0: p.x * k - 13,
-      y0: p.y * k - 13,
-      x1: p.x * k + 13,
-      y1: p.y * k + 13,
-    }));
-    const labels: { id: string; x: number; y: number; dx: number; dy: number; anchor: "start" | "end" | "middle"; name: string; sub: string }[] = [];
-    const want = placed.filter(
-      (p) => has(p, selectedId) || has(p, altId) || (p.kind === "one" && isRelevant(p.lead) && p.lead.status.tier !== "safe"),
-    );
-    const rank = (p: Placed) => (has(p, selectedId) ? 2 : has(p, altId) ? 1 : 0);
-    want.sort((a, b) => rank(b) - rank(a));
-    for (const p of want) {
-      const name = p.lead.name;
-      const sub = p.kind === "cluster" ? `${shortConfidence(p.lead.status)} · +${p.ids.length - 1} nearby` : shortConfidence(p.lead.status);
-      const w = Math.max(name.length * 6.6, sub.length * 6.1) + 4;
-      const sx = p.x * k;
-      const sy = p.y * k;
-      const pad = p.kind === "cluster" ? 22 : 15;
-      const options = [
-        { dx: pad, dy: -2, anchor: "start" as const, box: { x0: sx + 13, y0: sy - 14, x1: sx + 15 + w, y1: sy + 14 } },
-        { dx: -pad, dy: -2, anchor: "end" as const, box: { x0: sx - pad - w, y0: sy - 14, x1: sx - 13, y1: sy + 14 } },
-        { dx: 0, dy: 26, anchor: "middle" as const, box: { x0: sx - w / 2, y0: sy + 14, x1: sx + w / 2, y1: sy + 40 } },
-      ];
-      const hit = (b: (typeof options)[0]["box"]) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
-      const ok = options.find((o) => !hit(o.box)) ?? (rank(p) > 0 ? options[0] : null);
-      if (!ok) continue;
-      boxes.push(ok.box);
-      labels.push({ id: p.lead.id, x: p.x, y: p.y, dx: ok.dx, dy: ok.dy, anchor: ok.anchor, name, sub });
-    }
-    return { placed, labels };
-  }, [at, sources, selectedId, altId, isRelevant, bucket]);
-
+const MarkerLayer = memo(function MarkerLayer({ layout, sources, selectedId, altId, isRelevant, onSelect, onCluster }: LayerProps) {
   return (
     <g>
       {layout.placed.map((p) => {

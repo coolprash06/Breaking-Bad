@@ -13,7 +13,8 @@
 | Reference observation wells (depth to water, 2014 to Jan 2024) | **REAL** | 16 CGWB wells near our sources, via India-WRIS on the India Data Portal |
 | Daily level of each village source (sensor readings) | SIMULATED, driven by REAL inputs | Daily water balance using the REAL rain and evaporation at the source and the REAL district groundwater decline, plus usage, noise and sensor gaps. No public daily data exists for individual village ponds, tankas and wells |
 | Quarterly manual measurements of our sources | SIMULATED | 4 a year for wells, borewells and stepwells (CGWB-style); the real CGWB wells are shown separately as reference |
-| NDVI around sources | SIMULATED (Sentinel-2 is the next step) | Every 5 days, follows soil moisture (now from real rain); cloudy scenes skipped |
+| NDVI around sources | **REAL** | Copernicus Sentinel-2 L2A via Microsoft Planetary Computer: mean NDVI within 500 m of each (illustrative) source location, every pass from 17 Nov 2025 to 16 Nov 2026. 821 of 2805 scenes skipped as cloudy using the scene classification layer |
+| Satellite-checked water bodies | **REAL** | Sentinel-2 NDWI open-water area of Gadisar Lake (Jaisalmer), Hamirsar Lake (Bhuj) and Kaylana Lake (Jodhpur) over the past year |
 | Usage by persona category | SIMULATED | Households, animal-equivalents, pump-hours; seasonal (rabi pumping, summer herding) plus events |
 | Sensor failures and gaps | SIMULATED | Random 1-7 day gaps, a 16-day outage, one dead sensor (Well #16), rare glitches |
 | Days after demo day (revealed by the batch clock) | REAL forecast, then analogue | Open-Meteo 16-day forecast to 1 Dec 2026, then the same dates one year earlier from ERA5 (labelled in the data) |
@@ -62,7 +63,7 @@ The source readout adds a "Groundwater context" card with the district's real fi
 **What had to change to keep the demo story.** No scenario events were changed. Two demo-day target levels were lowered, because the real (dry) Jaisalmer rainfall cannot refill them as high: Tanka #2 from 1.90 to 1.85 m, and Beri #3 from 0.90 to 0.85 m. The demo story holds:
 - Nadi #9 is Warning on demo day, and the herder is sent to Well #22 (4 km).
 - Well #4 goes Safe to Warning after pumping restarts (+7 days).
-- Stepwell #6 is Watch on demo day and Warning from +21 days (was +14), with no suitable alternative.
+- Stepwell #6 is Watch on demo day and Warning from +32 days with real NDVI (was +14 on simulated data, see Satellite data), with no suitable alternative.
 - Well #16 is grey.
 
 Side effects of the real weather:
@@ -76,6 +77,31 @@ Side effects of the real weather:
 - Groundwater quality per well (EC > 3000 uS/cm) is on those same unreachable sites. We show the compilation's salinity-affected units instead (Khajuwala in Bikaner, Gandhidham in Kachchh). None is near our sources.
 - The monsoon normal is ERA5's own 1991-2020 mean, not the IMD gridded normal. The IMD grids are binary files that would need 30 years of downloads to build a normal, and comparing ERA5 with its own normal avoids mixing datasets.
 
+
+## Satellite data (added 17 Nov 2026)
+
+**NDVI is now real Sentinel-2.** For every source we take every Sentinel-2 pass in the history window. The Planetary Computer Data API computes, server-side, the share of cloud pixels (scene classification layer) and the mean NDVI within 500 m. No imagery is downloaded and none is loaded at runtime.
+- A scene with more than 10% cloud or cloud shadow there is skipped. The alert engine uses the last clear image, and the readout says "last clear image dd-mm" when the newest one was cloudy.
+- Across the year 821 of 2805 scenes were skipped, mostly in the monsoon. Each source readout shows its own count.
+- Mid-November is clear, so on demo day no source's newest image is cloudy.
+
+**Satellite-checked water bodies** (map layer "Lakes · S2"): open water (NDWI > 0, 10 m pixels) inside a circle around each lake's published coordinate, every clear pass over the past year.
+- A clear reading far below its neighbours (less than half their median) is flagged as dust or haze and not used, and marked × on the chart.
+- Each lake's coordinate was checked against the imagery: the script fails if the lake shows no water.
+
+| Lake | Coordinate | Circle | Nov 2025 | Lowest | Latest | Images / skipped |
+|---|---|---|---|---|---|---|
+| Gadisar Lake (Jaisalmer) | 26.908, 70.922 ([Wikipedia](https://en.wikipedia.org/wiki/Gadisar_Lake)) | 500 m | 9.1 ha (2025-11-20) | 2.6 ha | 4.4 ha (2026-11-15) | 87 / 15 cloudy / 6 haze |
+| Hamirsar Lake (Kachchh (Bhuj)) | 23.2514, 69.6642 ([Wikipedia](https://en.wikipedia.org/wiki/Hamirsar_Lake)) | 600 m | 39.0 ha (2025-11-20) | 21.3 ha | 24.3 ha (2026-11-15) | 87 / 30 cloudy / 1 haze |
+| Kaylana Lake (Jodhpur) | 26.2833, 72.9667 ([Wikipedia](https://en.wikipedia.org/wiki/Kaylana_Lake)) | 1300 m | 22.9 ha (2025-11-17) | 6.5 ha | 18.5 ha (2026-11-12) | 86 / 28 cloudy / 9 haze |
+
+Hamirsar shrank by almost half before the monsoon and only partly refilled after a monsoon 50% below normal. Gadisar lost more than half its area.
+
+**What changed in the demo:** **Stepwell #6** now reaches Warning at +32 days (18 Dec) instead of +21, and Emergency at +52. The reason is real data:
+- Phalodi had a real shower on 14-15 Nov 2026 (2.3 and 2.6 mm), so "no rain for 30+ days" only switches on mid-December.
+- The real NDVI around the stepwell rose after that shower (0.14 to 0.17), so "vegetation browning" is off.
+
+With only the falling level, the 2-of-3 rule holds the stepwell at Watch. We left that rule as it is. All other tiers and timings are unchanged.
 
 ## How the AI works
 
@@ -97,7 +123,7 @@ Side effects of the real weather:
    - The band widens with the days since the last reading and with the recent gap ratio.
    - When a sensor is dead, a newer manual measurement is used as the starting point.
    - No sensor reading for more than 7 days shows **Grey**, never hidden.
-   - Cloudy satellite images are skipped, and the last good value is used and labelled with its date.
+   - Cloudy satellite images (REAL Sentinel-2, scene classification layer) are skipped, and the last clear image is used and labelled with its date.
 4. **Alert engine (F4), balancing false alarms against missed alarms.**
    - **Tiers:**
      - Watch: dropping faster than usual and plausibly failing, or a 1-in-10 chance of failing within 8 weeks

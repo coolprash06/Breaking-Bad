@@ -116,6 +116,37 @@ export interface CgwbWellsData {
   notes: string[];
 }
 
+export interface WaterBodyPoint {
+  date: string;
+  /** Open-water area (ha, NDWI > 0) inside the circle; null when the scene was cloudy there. */
+  areaHa: number | null;
+  cloudy: boolean;
+  /** Clear by the cloud mask but far below its neighbours (dust / haze): raw value kept, not used. */
+  haze?: number;
+}
+
+export interface WaterBody {
+  id: string;
+  name: string;
+  district: string;
+  state: "Rajasthan" | "Gujarat";
+  lat: number;
+  lon: number;
+  /** Area is measured inside this circle around the published coordinate (m). */
+  radiusM: number;
+  /** Where the coordinate comes from. */
+  coordinateSource: string;
+  series: WaterBodyPoint[];
+}
+
+export interface WaterBodiesData {
+  title: string;
+  source: string;
+  retrieved: string;
+  method: string;
+  bodies: WaterBody[];
+}
+
 export interface RealContext {
   gwra: GwraData | null;
   wells: CgwbWellsData | null;

@@ -5,14 +5,23 @@
  */
 import gwraJson from "../../../data/real/gwra-2025.json";
 import wellsJson from "../../../data/real/cgwb-wells.json";
+import waterJson from "../../../data/real/water-bodies.json";
 import { getSnapshot, getSources } from "@/lib/data/store";
 import { haversineKm } from "@/lib/alerts/nearest";
 import type { SourceType } from "@/lib/types";
-import { GWRA_DISTRICT_OF, type CgwbWellsData, type GwCategory, type GwraData, type GwraDistrictKey } from "./types";
+import {
+  GWRA_DISTRICT_OF,
+  type CgwbWellsData,
+  type GwCategory,
+  type GwraData,
+  type GwraDistrictKey,
+  type WaterBodiesData,
+} from "./types";
 import type { GwraDistrictView, RealView, SourceRealContext } from "./view";
 
 const gwra = gwraJson as unknown as GwraData;
 const wells = wellsJson as unknown as CgwbWellsData;
+const water = waterJson as unknown as WaterBodiesData;
 
 const BLOCK_RADIUS_KM = 30;
 const toMcm = (ham: number) => Math.round(ham) / 100; // 1 ham = 0.01 million m3
@@ -128,6 +137,13 @@ export function getRealView(): RealView {
         readings: w.readings,
         preMonsoonTrendMPerYr: w.preMonsoonTrendMPerYr,
       })),
+    },
+    waterBodies: {
+      title: water.title,
+      source: water.source,
+      retrieved: water.retrieved,
+      method: water.method,
+      list: water.bodies,
     },
     climate:
       climate.provenance === "REAL"

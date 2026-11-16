@@ -15,6 +15,18 @@ export interface StatusView extends StatusLite {
   currentLevel: number;
   startKind: "sensor" | "manual" | "none";
   topReasons: string[];
+  /** Satellite vegetation signal (F7: cloudy scenes skipped, last clear image used). */
+  satellite: {
+    ndvi: number | null;
+    /** Date of the last clear image (cloudy ones are skipped). */
+    lastClear: string | null;
+    /** Cloudy images since the last clear one. */
+    cloudySince: number;
+    /** Images and cloudy images in the history up to the clock date. */
+    scenes: number;
+    cloudy: number;
+    provenance: "REAL" | "SIMULATED";
+  };
 }
 
 export interface SourceView extends SourceLite {

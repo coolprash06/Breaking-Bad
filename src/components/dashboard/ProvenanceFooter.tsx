@@ -23,6 +23,11 @@ export default function ProvenanceFooter({ provenance, real = null }: { provenan
             <DataBadge provenance="REAL" /> Reference wells (CGWB)
           </span>
         )}
+        {real?.waterBodies && (
+          <span className="inline-flex items-center gap-1.5" title={`${real.waterBodies.source}. ${real.waterBodies.method}`}>
+            <DataBadge provenance="REAL" /> Satellite-checked water bodies (Sentinel-2)
+          </span>
+        )}
         {provenance.map((p) => (
           <span key={p.id} className="inline-flex items-center gap-1.5" title={`${p.source}. ${p.note}`}>
             <DataBadge provenance={p.provenance} /> {p.title}
@@ -59,7 +64,16 @@ export default function ProvenanceFooter({ provenance, real = null }: { provenan
               <a className="underline" href="https://open-meteo.com/" target="_blank" rel="noreferrer">
                 Open-Meteo
               </a>{" "}
-              (CC BY 4.0), ERA5 reanalysis by Copernicus Climate Change Service / ECMWF. Block towns geocoded with GeoNames (CC BY 4.0).
+              (CC BY 4.0), ERA5 reanalysis by Copernicus Climate Change Service / ECMWF. Block towns geocoded with GeoNames (CC BY 4.0).{" "}
+            </>
+          )}
+          {real.waterBodies && (
+            <>
+              Satellite: contains modified Copernicus Sentinel-2 data (2025-2026, ESA), processed via{" "}
+              <a className="underline" href="https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a" target="_blank" rel="noreferrer">
+                Microsoft Planetary Computer
+              </a>{" "}
+              (retrieved {real.waterBodies.retrieved}). Lake coordinates from Wikipedia.
             </>
           )}
         </p>

@@ -194,7 +194,12 @@ function head(name: string, s: StatusLite): Part {
     case "watch":
       return {
         en: `${name}: water falling faster than usual. May run dry ${w.en} (${c} sure).`,
-        hi: `${hn} तेजी से घट ${hiAgree(name, "रहा", "रही")} है, ${w.hi} सूख ${hiAgree(name, "सकता", "सकती")} है (${c} पक्का)।`,
+        // The WATER falls (पानी, masculine), not the source itself: "बावड़ी नं.6 का पानी तेजी से घट रहा है".
+        hi: `${hn} का पानी तेजी से घट रहा है, ${w.hi} सूख सकता है (${c} पक्का)।`,
+        short: {
+          en: `${name}: water falling fast. May run dry ${w.en} (${c} sure).`,
+          hi: `${hn} का पानी तेजी से घट रहा, ${w.hi} सूख सकता है (${c})।`,
+        },
       };
     case "emergency":
       return { en: `URGENT: ${name} may run dry ${w.en} (${c} sure).`, hi: `तुरंत ध्यान दें: ${mayDryHi(name, w)} (${c} पक्का)।` };

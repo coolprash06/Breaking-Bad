@@ -12,8 +12,9 @@ import { useThemeKey } from "@/components/theme/useThemeKey";
 import type { RealView } from "@/lib/real/view";
 import { GW_CATEGORY_UI } from "@/lib/real/view";
 import type { GwCategory } from "@/lib/real/types";
-import { BlockGlyph, WellGlyph } from "./RealLayers";
+import { BlockGlyph, LakeGlyph, WellGlyph } from "./RealLayers";
 import WellCard from "./WellCard";
+import LakeCard from "./LakeCard";
 
 const GW_LEGEND: GwCategory[] = ["safe", "semi_critical", "critical", "over_exploited", "saline"];
 
@@ -53,6 +54,13 @@ function canRun3D(): boolean {
   return capable;
 }
 const noSubscribe = () => () => {};
+const WIDE_QUERY = "(min-width: 1280px)";
+const isWide = () => window.matchMedia(WIDE_QUERY).matches;
+function subscribeWide(cb: () => void) {
+  const mq = window.matchMedia(WIDE_QUERY);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+}
 function probe3D(): boolean {
   try {
     const nav = navigator as Navigator & { deviceMemory?: number };
@@ -85,7 +93,12 @@ const REGION_CENTRE = {
 const nearIndia = (lat: number, lon: number) => lat > 4 && lat < 38 && lon > 66 && lon < 99;
 
 export default function MapStage({ sources, selectedId, onSelect, isRelevant, focus, link, real }: Props) {
-  const [layers, setLayers] = useState({ blocks: false, wells: false });
+  const [layers, setLayers] = useState({ blocks: false, wells: false, lakes: false });
+  const [lakeId, setLakeId] = useState<string | null>(null);
+  /** User's explicit legend choice; until then, open on wide screens, closed on smaller ones. */
+  const [legendChoice, setLegendChoice] = useState<boolean | null>(null);
+  const wide = useSyncExternalStore(subscribeWide, isWide, () => true);
+  const legendOpen = legendChoice ?? wide;
   const [wellCode, setWellCode] = useState<string | null>(null);
   const [geo, setGeo] = useState<GeoBundle | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
@@ -175,19 +188,38 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
 
   const api = () => (view === "globe" ? globeApi.current : mapApi.current);
 
+  const lakeMarkers = useMemo(
+    () =>
+      real?.waterBodies?.list.map((l) => {
+        const clear = l.series.filter((p) => p.areaHa !== null);
+        return { id: l.id, name: l.name, lat: l.lat, lon: l.lon, latestHa: clear.length ? (clear[clear.length - 1].areaHa as number) : null };
+      }) ?? [],
+    [real],
+  );
   const overlays = useMemo(
     () => ({
       blocks: layers.blocks ? (real?.gwra?.blocks ?? null) : null,
       wells: layers.wells ? (real?.wells?.list ?? null) : null,
       selectedWell: wellCode,
-      onWell: setWellCode,
+      onWell: (code: string) => {
+        setWellCode(code);
+        setLakeId(null);
+      },
+      lakes: layers.lakes ? lakeMarkers : null,
+      selectedLake: lakeId,
+      onLake: (id: string) => {
+        setLakeId(id);
+        setWellCode(null);
+      },
     }),
-    [layers, real, wellCode],
+    [layers, real, wellCode, lakeMarkers, lakeId],
   );
+  const lake = layers.lakes && lakeId ? real?.waterBodies?.list.find((l) => l.id === lakeId) ?? null : null;
   const well = layers.wells && wellCode ? real?.wells?.list.find((w) => w.code === wellCode) ?? null : null;
-  const toggleLayer = (k: "blocks" | "wells") => {
+  const toggleLayer = (k: "blocks" | "wells" | "lakes") => {
     setLayers((l) => ({ ...l, [k]: !l[k] }));
     if (k === "wells") setWellCode(null);
+    if (k === "lakes") setLakeId(null);
     if (view === "globe") flyIn();
   };
   const unplaced = real?.gwra?.blocks.filter((b) => b.lat === null).map((b) => b.label) ?? [];
@@ -254,7 +286,7 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
       </div>
 
       {/* REAL reference layers (below the view switch) */}
-      {real && (real.gwra || real.wells) && (
+      {real && (real.gwra || real.wells || real.waterBodies) && (
         <div className="wc-ctl absolute top-[52px] left-3 z-10 flex flex-wrap items-center gap-0.5 p-[3px]" role="group" aria-label="Real data layers">
           <span className="px-2 font-mono text-[10px] tracking-[0.12em] text-faint">REAL</span>
           {real.gwra && (
@@ -279,11 +311,32 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
               CGWB wells
             </button>
           )}
+          {real.waterBodies && (
+            <button
+              aria-pressed={layers.lakes}
+              onClick={() => toggleLayer("lakes")}
+              title="Satellite-checked water bodies: open-water area of real, named lakes from Sentinel-2 over the past year"
+              className={`rounded px-2.5 py-1.5 uppercase ${layers.lakes ? "text-lab" : "text-muted"}`}
+              style={layers.lakes ? { background: "color-mix(in srgb, var(--lab) 16%, transparent)" } : undefined}
+            >
+              Lakes · S2
+            </button>
+          )}
         </div>
       )}
 
-      {/* Legend (top-right) */}
-      <div className="absolute top-3 right-3 z-10 hidden max-w-[220px] gap-2 sm:grid">
+      {/* Legend (top-right): collapsible, collapsed by default on smaller screens */}
+      <div className="absolute top-3 right-3 z-10 grid max-w-[220px] justify-items-end gap-2">
+        <button
+          className="wc-ctl px-2.5 py-1.5 font-mono text-[10.5px] tracking-[0.12em] text-muted uppercase hover:text-lab"
+          aria-expanded={legendOpen}
+          aria-controls="map-legend"
+          onClick={() => setLegendChoice(!legendOpen)}
+        >
+          Legend {legendOpen ? "▴" : "▾"}
+        </button>
+      </div>
+      <div id="map-legend" className={`absolute top-[46px] right-3 z-10 max-w-[220px] gap-2 ${legendOpen ? "grid" : "hidden"}`}>
         <div className="wc-ctl grid gap-1.5 px-2.5 py-2 font-mono text-[11px]" aria-label="Risk legend">
           {RISK_ORDER.map((t) => (
             <span key={t} className="flex items-center gap-2">
@@ -311,14 +364,27 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant, fo
         )}
         {view === "map" && layers.wells && real?.wells && (
           <div className="wc-ctl flex items-center gap-2 px-2.5 py-2 font-mono text-[11px]">
-            <svg width={20} height={20} viewBox="-10 -10 20 20" aria-hidden>
+            <svg width={22} height={22} viewBox="-14 -14 28 28" aria-hidden>
               <WellGlyph />
             </svg>
             CGWB observation well
           </div>
         )}
+        {view === "map" && layers.lakes && real?.waterBodies && (
+          <div className="wc-ctl flex items-center gap-2 px-2.5 py-2 font-mono text-[11px]">
+            <svg width={30} height={22} viewBox="-15 -11 30 22" aria-hidden>
+              <LakeGlyph />
+            </svg>
+            Satellite-checked water body
+          </div>
+        )}
       </div>
 
+      {lake && real?.waterBodies && (
+        <div className="absolute bottom-12 left-3 z-20">
+          <LakeCard lake={lake} method={real.waterBodies.method} onClose={() => setLakeId(null)} />
+        </div>
+      )}
       {well && (
         <div className="absolute bottom-12 left-3 z-20">
           <WellCard well={well} sourceName={sources.find((s) => s.id === well.nearestSourceId)?.name ?? null} onClose={() => setWellCode(null)} />

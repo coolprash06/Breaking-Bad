@@ -1,0 +1,1360 @@
+{
+ "title": "Satellite-checked water bodies",
+ "source": "Copernicus Sentinel-2 L2A (ESA), via Microsoft Planetary Computer",
+ "retrieved": "2026-11-16",
+ "method": "Open water = pixels with NDWI (B03 - B08) / (B03 + B08) > 0 at 10 m, counted inside a circle around the lake's published coordinate (100 pixels = 1 ha). Scenes with more than 10% cloud or cloud shadow in that circle (scene classification layer) are skipped. A clear reading below half the median of its 3 clear neighbours on each side is flagged as dust / haze and not used (raw value kept as 'haze').",
+ "bodies": [
+  {
+   "id": "gadisar",
+   "name": "Gadisar Lake",
+   "district": "Jaisalmer",
+   "state": "Rajasthan",
+   "lat": 26.908,
+   "lon": 70.922,
+   "radiusM": 500,
+   "coordinateSource": "https://en.wikipedia.org/wiki/Gadisar_Lake",
+   "series": [
+    {
+     "date": "2025-11-20",
+     "areaHa": 9.08,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-22",
+     "areaHa": 8.95,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-25",
+     "areaHa": 8.83,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-30",
+     "areaHa": 8.69,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-05",
+     "areaHa": 8.73,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-10",
+     "areaHa": 8.57,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-12",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2025-12-15",
+     "areaHa": 8.47,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-20",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2025-12-25",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2025-12-30",
+     "areaHa": 8.2,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-01",
+     "areaHa": 7.91,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-04",
+     "areaHa": 7.97,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-09",
+     "areaHa": 7.94,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-14",
+     "areaHa": 7.95,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-19",
+     "areaHa": 6.67,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-24",
+     "areaHa": 7.45,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-29",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-02-03",
+     "areaHa": 7.67,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-08",
+     "areaHa": 7.47,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-13",
+     "areaHa": 7.42,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-18",
+     "areaHa": 7.32,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-23",
+     "areaHa": 7.16,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-28",
+     "areaHa": 7.03,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-05",
+     "areaHa": 6.76,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-10",
+     "areaHa": 6.67,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-15",
+     "areaHa": 6.06,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-20",
+     "areaHa": 6.54,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-25",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-03-30",
+     "areaHa": 6.06,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-01",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-04-04",
+     "areaHa": 6.29,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-09",
+     "areaHa": 5.84,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-14",
+     "areaHa": 5.91,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-19",
+     "areaHa": 5.92,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-21",
+     "areaHa": 5.81,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-24",
+     "areaHa": 5.97,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-29",
+     "areaHa": 5.67,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-04",
+     "areaHa": 4.8,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-09",
+     "areaHa": 5.48,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-11",
+     "areaHa": 5.54,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-14",
+     "areaHa": 5.47,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-19",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 2.69
+    },
+    {
+     "date": "2026-05-24",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 1.76
+    },
+    {
+     "date": "2026-05-31",
+     "areaHa": 4.99,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-03",
+     "areaHa": 4.89,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-08",
+     "areaHa": 5.06,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-13",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 0.02
+    },
+    {
+     "date": "2026-06-18",
+     "areaHa": 4.64,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-20",
+     "areaHa": 4.16,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-23",
+     "areaHa": 4.74,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-28",
+     "areaHa": 4.93,
+     "cloudy": false
+    },
+    {
+     "date": "2026-07-03",
+     "areaHa": 4.73,
+     "cloudy": false
+    },
+    {
+     "date": "2026-07-08",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 0.18
+    },
+    {
+     "date": "2026-07-10",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 0.18
+    },
+    {
+     "date": "2026-07-13",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-18",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-20",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-23",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-28",
+     "areaHa": 2.62,
+     "cloudy": false
+    },
+    {
+     "date": "2026-08-02",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-07",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 0.13
+    },
+    {
+     "date": "2026-08-09",
+     "areaHa": 5.6,
+     "cloudy": false
+    },
+    {
+     "date": "2026-08-12",
+     "areaHa": 5.29,
+     "cloudy": false
+    },
+    {
+     "date": "2026-08-17",
+     "areaHa": 4.99,
+     "cloudy": false
+    },
+    {
+     "date": "2026-08-22",
+     "areaHa": 4.27,
+     "cloudy": false
+    },
+    {
+     "date": "2026-08-27",
+     "areaHa": 3.3,
+     "cloudy": false
+    },
+    {
+     "date": "2026-08-29",
+     "areaHa": 4.83,
+     "cloudy": false
+    },
+    {
+     "date": "2026-09-01",
+     "areaHa": 4.5,
+     "cloudy": false
+    },
+    {
+     "date": "2026-09-06",
+     "areaHa": 4.45,
+     "cloudy": false
+    },
+    {
+     "date": "2026-09-11",
+     "areaHa": 4.32,
+     "cloudy": false
+    },
+    {
+     "date": "2026-09-16",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-18",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-21",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-26",
+     "areaHa": 3.95,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-01",
+     "areaHa": 3.12,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-06",
+     "areaHa": 3.79,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-08",
+     "areaHa": 3.44,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-11",
+     "areaHa": 3.56,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-16",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-10-21",
+     "areaHa": 3.22,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-26",
+     "areaHa": 3.2,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-28",
+     "areaHa": 3.1,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-31",
+     "areaHa": 3.31,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-05",
+     "areaHa": 3.82,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-10",
+     "areaHa": 3.87,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-15",
+     "areaHa": 4.4,
+     "cloudy": false
+    }
+   ]
+  },
+  {
+   "id": "hamirsar",
+   "name": "Hamirsar Lake",
+   "district": "Kachchh (Bhuj)",
+   "state": "Gujarat",
+   "lat": 23.2514,
+   "lon": 69.6642,
+   "radiusM": 600,
+   "coordinateSource": "https://en.wikipedia.org/wiki/Hamirsar_Lake",
+   "series": [
+    {
+     "date": "2025-11-20",
+     "areaHa": 38.99,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-22",
+     "areaHa": 38.99,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-25",
+     "areaHa": 38.82,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-30",
+     "areaHa": 38.74,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-05",
+     "areaHa": 38.9,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-10",
+     "areaHa": 39.07,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-12",
+     "areaHa": 39.03,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-15",
+     "areaHa": 39.07,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-20",
+     "areaHa": 36.52,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-25",
+     "areaHa": 38.84,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-30",
+     "areaHa": 38.96,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-01",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-01-04",
+     "areaHa": 39.06,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-09",
+     "areaHa": 38.98,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-14",
+     "areaHa": 38.81,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-19",
+     "areaHa": 38.53,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-24",
+     "areaHa": 38.29,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-29",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-02-03",
+     "areaHa": 38.39,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-08",
+     "areaHa": 38.1,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-13",
+     "areaHa": 38.13,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-18",
+     "areaHa": 37.88,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-23",
+     "areaHa": 37.6,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-28",
+     "areaHa": 37.51,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-05",
+     "areaHa": 37.25,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-10",
+     "areaHa": 36.73,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-15",
+     "areaHa": 36.3,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-20",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-03-25",
+     "areaHa": 36.48,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-30",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-04-01",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-04-04",
+     "areaHa": 35.75,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-09",
+     "areaHa": 35.05,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-14",
+     "areaHa": 34.94,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-19",
+     "areaHa": 34.26,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-21",
+     "areaHa": 33.9,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-24",
+     "areaHa": 33.89,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-29",
+     "areaHa": 31.68,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-04",
+     "areaHa": 31.79,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-09",
+     "areaHa": 31.78,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-11",
+     "areaHa": 31.53,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-14",
+     "areaHa": 31.13,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-19",
+     "areaHa": 29.93,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-24",
+     "areaHa": 29.46,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-31",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-06-03",
+     "areaHa": 28.31,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-08",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-06-13",
+     "areaHa": 26.86,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-18",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-06-20",
+     "areaHa": 26.18,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-23",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-06-28",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-03",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-08",
+     "areaHa": 21.27,
+     "cloudy": false
+    },
+    {
+     "date": "2026-07-10",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-13",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 0
+    },
+    {
+     "date": "2026-07-18",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-20",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-23",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-28",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-02",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-07",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-09",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-12",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-17",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-22",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-27",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-29",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-01",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-06",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-11",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-16",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-18",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-21",
+     "areaHa": 24.21,
+     "cloudy": false
+    },
+    {
+     "date": "2026-09-26",
+     "areaHa": 28.12,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-01",
+     "areaHa": 24.62,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-06",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-10-08",
+     "areaHa": 26.97,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-11",
+     "areaHa": 26.97,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-16",
+     "areaHa": 27.09,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-21",
+     "areaHa": 25.78,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-26",
+     "areaHa": 25.05,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-28",
+     "areaHa": 24.46,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-31",
+     "areaHa": 24.72,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-05",
+     "areaHa": 24.04,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-10",
+     "areaHa": 24.15,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-15",
+     "areaHa": 24.33,
+     "cloudy": false
+    }
+   ]
+  },
+  {
+   "id": "kaylana",
+   "name": "Kaylana Lake",
+   "district": "Jodhpur",
+   "state": "Rajasthan",
+   "lat": 26.2833,
+   "lon": 72.9667,
+   "radiusM": 1300,
+   "coordinateSource": "https://en.wikipedia.org/wiki/Kaylana_Lake",
+   "series": [
+    {
+     "date": "2025-11-17",
+     "areaHa": 22.93,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-22",
+     "areaHa": 22.54,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-27",
+     "areaHa": 18.47,
+     "cloudy": false
+    },
+    {
+     "date": "2025-11-29",
+     "areaHa": 21.05,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-02",
+     "areaHa": 22.16,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-07",
+     "areaHa": 16.64,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-12",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2025-12-17",
+     "areaHa": 22.23,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-19",
+     "areaHa": 22.43,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-22",
+     "areaHa": 23.34,
+     "cloudy": false
+    },
+    {
+     "date": "2025-12-27",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-01-01",
+     "areaHa": 22.29,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-06",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 2.08
+    },
+    {
+     "date": "2026-01-08",
+     "areaHa": 21.89,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-11",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 5.99
+    },
+    {
+     "date": "2026-01-16",
+     "areaHa": 22.62,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-21",
+     "areaHa": 24.62,
+     "cloudy": false
+    },
+    {
+     "date": "2026-01-26",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-01-31",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-02-05",
+     "areaHa": 25.4,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-10",
+     "areaHa": 24.75,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-15",
+     "areaHa": 23.42,
+     "cloudy": false
+    },
+    {
+     "date": "2026-02-20",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 2.17
+    },
+    {
+     "date": "2026-02-25",
+     "areaHa": 24.16,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-02",
+     "areaHa": 23.74,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-07",
+     "areaHa": 22.36,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-09",
+     "areaHa": 22.28,
+     "cloudy": false
+    },
+    {
+     "date": "2026-03-12",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-03-17",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-03-19",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-03-22",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-03-27",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 7.23
+    },
+    {
+     "date": "2026-04-06",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 4.92
+    },
+    {
+     "date": "2026-04-08",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 0.86
+    },
+    {
+     "date": "2026-04-11",
+     "areaHa": 22.2,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-16",
+     "areaHa": 23.83,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-21",
+     "areaHa": 25.14,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-26",
+     "areaHa": 24.88,
+     "cloudy": false
+    },
+    {
+     "date": "2026-04-28",
+     "areaHa": 25.52,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-01",
+     "areaHa": 24.05,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-06",
+     "areaHa": 19.25,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-11",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 4.32
+    },
+    {
+     "date": "2026-05-16",
+     "areaHa": 14.04,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-21",
+     "areaHa": 15.63,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-26",
+     "areaHa": 6.54,
+     "cloudy": false
+    },
+    {
+     "date": "2026-05-31",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 0.01
+    },
+    {
+     "date": "2026-06-07",
+     "areaHa": 10.48,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-10",
+     "areaHa": null,
+     "cloudy": false,
+     "haze": 1.16
+    },
+    {
+     "date": "2026-06-15",
+     "areaHa": 15.29,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-20",
+     "areaHa": 15.96,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-25",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-06-27",
+     "areaHa": 20.09,
+     "cloudy": false
+    },
+    {
+     "date": "2026-06-30",
+     "areaHa": 19.35,
+     "cloudy": false
+    },
+    {
+     "date": "2026-07-05",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-10",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-15",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-20",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-25",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-27",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-07-30",
+     "areaHa": 19.18,
+     "cloudy": false
+    },
+    {
+     "date": "2026-08-04",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-09",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-14",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-16",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-19",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-24",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-08-29",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-03",
+     "areaHa": 17.08,
+     "cloudy": false
+    },
+    {
+     "date": "2026-09-05",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-08",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-13",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-18",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-09-23",
+     "areaHa": 18.45,
+     "cloudy": false
+    },
+    {
+     "date": "2026-09-25",
+     "areaHa": 17.75,
+     "cloudy": false
+    },
+    {
+     "date": "2026-09-28",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-10-03",
+     "areaHa": 16.39,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-08",
+     "areaHa": 18.62,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-13",
+     "areaHa": 18.17,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-15",
+     "areaHa": 19.2,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-18",
+     "areaHa": null,
+     "cloudy": true
+    },
+    {
+     "date": "2026-10-23",
+     "areaHa": 17.88,
+     "cloudy": false
+    },
+    {
+     "date": "2026-10-28",
+     "areaHa": 18.76,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-02",
+     "areaHa": 18.27,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-04",
+     "areaHa": 18.33,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-07",
+     "areaHa": 18.27,
+     "cloudy": false
+    },
+    {
+     "date": "2026-11-12",
+     "areaHa": 18.54,
+     "cloudy": false
+    }
+   ]
+  }
+ ]
+}

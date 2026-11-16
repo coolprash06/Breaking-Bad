@@ -156,6 +156,8 @@ export interface NdviPoint {
   /** null when the scene was cloudy and skipped. */
   value: number | null;
   cloudy: boolean;
+  /** Cloud share around the source from the scene classification (REAL Sentinel-2 only), %. */
+  cloudPct?: number;
 }
 
 export type NdviData = Record<string, NdviPoint[]>;

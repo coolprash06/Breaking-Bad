@@ -15,6 +15,9 @@ import type { DispatchMessage, FieldReply } from "@/lib/alerts/dispatch";
 import type { RealView } from "@/lib/real/view";
 import { GW_CATEGORY_UI } from "@/lib/real/view";
 
+/** "2026-11-05" -> "05-11" */
+const ddmm = (iso: string) => `${iso.slice(8, 10)}-${iso.slice(5, 7)}`;
+
 const fmtMonth = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
 
@@ -312,6 +315,16 @@ export default function SourceReadout({ source, asOf, alt, onOpenAlt, onClearAlt
           <dd className="text-right">{source.failureLevelM.toFixed(2)} m</dd>
           <dt className="text-muted">Last reading</dt>
           <dd className="text-right">{st.lastReading ? `${formatShort(st.lastReading.date)} · ${st.lastReading.daysAgo} d ago` : "none"}</dd>
+          <dt className="text-muted">Vegetation (NDVI)</dt>
+          <dd className="text-right">
+            {st.satellite.ndvi !== null ? st.satellite.ndvi.toFixed(2) : "no clear image"}
+            {st.satellite.lastClear && (
+              <span className={st.satellite.cloudySince > 0 ? "text-amber" : "text-muted"}>
+                {" "}
+                · {st.satellite.cloudySince > 0 ? "last clear image" : "image"} {ddmm(st.satellite.lastClear)}
+              </span>
+            )}
+          </dd>
           {d && (
             <>
               <dt className="text-muted">Model fit</dt>
@@ -322,6 +335,9 @@ export default function SourceReadout({ source, asOf, alt, onOpenAlt, onClearAlt
           )}
         </dl>
         <div className="flex flex-wrap items-center gap-2 font-mono text-[10.5px] text-muted">
+          <DataBadge provenance={st.satellite.provenance} /> NDVI
+          {st.satellite.provenance === "REAL" ? " (Sentinel-2" : " ("}
+          {st.satellite.scenes > 0 && `, ${st.satellite.cloudy} of ${st.satellite.scenes} images skipped as cloudy`}) ·{" "}
           <DataBadge provenance={d?.provenance.readings ?? "SIMULATED"} /> level readings (no public daily data for village sources)
           {real?.climate && (
             <>

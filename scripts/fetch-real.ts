@@ -3,7 +3,7 @@
  * calls external APIs at runtime and the demo works offline.
  *
  * Usage: npm run fetch-real            (everything)
- *        npm run fetch-real -- climate (one part: gwra | wells | climate)
+ *        npm run fetch-real -- climate (one part: gwra | wells | climate | satellite)
  *
  * Then run `npm run generate` so the simulated village-source levels are driven by
  * the real rainfall / evaporation and the real district groundwater decline.
@@ -19,6 +19,21 @@ import { readPdf } from "./real/pdfText";
 import { GWRA_URL, parseGwra, SPECIFIC_YIELD } from "./real/gwra";
 import { fetchMonsoonNormal, fetchOpenMeteo } from "./real/openMeteo";
 import { fetchCgwbWells, IDP_DATASET_URL } from "./real/cgwbWells";
+import {
+  circle,
+  cloudFraction,
+  MAX_CLOUD_FRACTION,
+  meanNdvi,
+  pool,
+  searchScenes,
+  StatsCache,
+  waterPixels,
+  type S2Item,
+} from "./real/sentinel";
+import type { NdviData } from "../src/lib/types";
+import type { WaterBodiesData, WaterBody } from "../src/lib/real/types";
+import { flagHaze } from "../src/lib/real/haze";
+import { addDays } from "../src/lib/time";
 
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, "data", "real");
@@ -261,9 +276,148 @@ async function climate(): Promise<void> {
   write("climate.json", ds, false);
 }
 
+// ------------------------------------------------------------------ Sentinel-2
+
+/** NDVI is averaged over a circle of this radius around each (illustrative) source location. */
+const NDVI_RADIUS_M = 500;
+
+/** REAL, named water bodies. Coordinates from Wikipedia; checked against the imagery (water at the centre). */
+const WATER_BODIES: Omit<WaterBody, "series">[] = [
+  {
+    id: "gadisar",
+    name: "Gadisar Lake",
+    district: "Jaisalmer",
+    state: "Rajasthan",
+    lat: 26.908,
+    lon: 70.922,
+    radiusM: 500,
+    coordinateSource: "https://en.wikipedia.org/wiki/Gadisar_Lake",
+  },
+  {
+    id: "hamirsar",
+    name: "Hamirsar Lake",
+    district: "Kachchh (Bhuj)",
+    state: "Gujarat",
+    lat: 23.2514,
+    lon: 69.6642,
+    radiusM: 600,
+    coordinateSource: "https://en.wikipedia.org/wiki/Hamirsar_Lake",
+  },
+  {
+    id: "kaylana",
+    name: "Kaylana Lake",
+    district: "Jodhpur",
+    state: "Rajasthan",
+    lat: 26.2833,
+    lon: 72.9667,
+    radiusM: 1300,
+    coordinateSource: "https://en.wikipedia.org/wiki/Kaylana_Lake",
+  },
+];
+
+async function satellite(): Promise<void> {
+  console.log("Sentinel-2 L2A via Microsoft Planetary Computer (server-side statistics, no imagery downloaded)");
+  const tl = buildTimeline();
+  const cache = new StatsCache(path.join(CACHE, "sentinel-stats.json"));
+  const tick = (label: string, total: number) => (done: number) => {
+    if (done % 100 === 0 || done === total) log(`${label}: ${done}/${total}`);
+  };
+
+  // --- a) NDVI around every source over the history window (cloudy scenes skipped).
+  const scenes = new Map<string, S2Item[]>();
+  await pool(
+    SOURCE_SPECS.map((src) => async () => {
+      scenes.set(src.id, await searchScenes(src.lat, src.lon, tl.start, tl.demoDate));
+    }),
+    4,
+  );
+  const jobs: (() => Promise<void>)[] = [];
+  const ndvi: NdviData = {};
+  const failed: string[] = [];
+  for (const src of SOURCE_SPECS) {
+    const list = scenes.get(src.id)!;
+    const f = circle(src.lat, src.lon, NDVI_RADIUS_M);
+    const key = `${src.lat},${src.lon},${NDVI_RADIUS_M}`;
+    ndvi[src.id] = list.map((it) => ({ date: it.date, value: null, cloudy: true }));
+    list.forEach((it, i) =>
+      jobs.push(async () => {
+        try {
+          const c = await cloudFraction(cache, it, key, f);
+          const cloudy = c.valid === 0 || c.cloud > MAX_CLOUD_FRACTION;
+          const value = cloudy ? null : await meanNdvi(cache, it, key, f);
+          ndvi[src.id][i] = { date: it.date, value, cloudy: cloudy || value === null, cloudPct: Math.round(c.cloud * 100) };
+        } catch (e) {
+          // The API could not process this scene: leave it out (it is not "cloudy").
+          failed.push(`${src.id} ${it.id}: ${(e as Error).message}`);
+          ndvi[src.id][i] = { date: "", value: null, cloudy: true };
+        }
+      }),
+    );
+  }
+  log(`NDVI: ${jobs.length} scene x source checks`);
+  await pool(jobs, 8, tick("NDVI", jobs.length));
+  cache.save();
+  for (const id of Object.keys(ndvi)) ndvi[id] = ndvi[id].filter((p) => p.date !== "");
+  if (failed.length) log(`NDVI: ${failed.length} scene(s) left out (API error): ${failed.slice(0, 3).join("; ")}`);
+  const nScenes = Object.values(ndvi).reduce((a, p) => a + p.length, 0);
+  const nCloudy = Object.values(ndvi).reduce((a, p) => a + p.filter((x) => x.cloudy).length, 0);
+  log(`NDVI: ${nScenes} scenes, ${nCloudy} cloudy (skipped)`);
+
+  const ds: Dataset<NdviData> = {
+    id: "ndvi",
+    provenance: "REAL",
+    title: "Vegetation greenness (NDVI)",
+    source: "Copernicus Sentinel-2 L2A (ESA), via Microsoft Planetary Computer",
+    note: `Mean NDVI within ${NDVI_RADIUS_M} m of each source location, every Sentinel-2 pass ${tl.start} to ${tl.demoDate}. A scene is skipped as cloudy when more than ${MAX_CLOUD_FRACTION * 100}% of the pixels there are cloud or cloud shadow in the scene classification layer (SCL). Retrieved ${today}. Source locations are illustrative.`,
+    data: ndvi,
+  };
+  write("ndvi.json", ds, false);
+
+  // --- b) Water area of real, named water bodies over the past year.
+  const from = addDays(tl.demoDate, -365);
+  const bodies: WaterBody[] = [];
+  for (const b of WATER_BODIES) {
+    const list = await searchScenes(b.lat, b.lon, from, tl.demoDate);
+    const f = circle(b.lat, b.lon, b.radiusM);
+    const key = `${b.lat},${b.lon},${b.radiusM}`;
+    const raw = await pool(
+      list.map((it) => async () => {
+        try {
+          const c = await cloudFraction(cache, it, key, f);
+          const cloudy = c.valid === 0 || c.cloud > MAX_CLOUD_FRACTION;
+          if (cloudy) return { date: it.date, areaHa: null, cloudy: true };
+          const w = await waterPixels(cache, it, key, f);
+          return { date: it.date, areaHa: Math.round(w.water) / 100, cloudy: false }; // 10 m pixels: 100 px = 1 ha
+        } catch (e) {
+          log(`${b.name} ${it.id}: left out (${(e as Error).message})`);
+          return null;
+        }
+      }),
+      6,
+    );
+    const series = flagHaze(raw.filter((p): p is NonNullable<typeof p> => p !== null));
+    const nHaze = series.filter((p) => p.haze !== undefined).length;
+    cache.save();
+    const clear = series.filter((p) => p.areaHa !== null).map((p) => p.areaHa as number);
+    // Sanity check of the coordinate: the lake must show water in its clearest scenes.
+    if (!clear.length || Math.max(...clear) < 1) throw new Error(`${b.name}: no water found at ${b.lat}, ${b.lon}`);
+    log(`${b.name}: ${series.length} scenes, ${series.length - clear.length - nHaze} cloudy, ${nHaze} hazy, water ${Math.min(...clear)}-${Math.max(...clear)} ha`);
+    bodies.push({ ...b, series });
+  }
+  const wb: WaterBodiesData = {
+    title: "Satellite-checked water bodies",
+    source: "Copernicus Sentinel-2 L2A (ESA), via Microsoft Planetary Computer",
+    retrieved: today,
+    method:
+      "Open water = pixels with NDWI (B03 - B08) / (B03 + B08) > 0 at 10 m, counted inside a circle around the lake's published coordinate (100 pixels = 1 ha). Scenes with more than 10% cloud or cloud shadow in that circle (scene classification layer) are skipped. A clear reading below half the median of its 3 clear neighbours on each side is flagged as dust / haze and not used (raw value kept as 'haze').",
+    bodies,
+  };
+  write("water-bodies.json", wb);
+}
+
 // ------------------------------------------------------------------ main
 
-const PARTS: Record<string, () => Promise<void>> = { gwra, wells, climate };
+const PARTS: Record<string, () => Promise<void>> = { gwra, wells, climate, satellite };
 
 (async () => {
   const want = process.argv.slice(2).filter((a) => PARTS[a]);

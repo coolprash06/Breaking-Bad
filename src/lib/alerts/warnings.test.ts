@@ -30,6 +30,23 @@ describe("haversineKm", () => {
   });
 });
 
+describe("Hindi wording", () => {
+  it("says the WATER is falling (पानी, masculine), never that the source itself shrinks", () => {
+    const all = liteAll(DEMO);
+    for (const src of all) {
+      const forced = { ...src, status: { ...src.status, tier: "watch" as const } };
+      for (const p of PERSONAS) {
+        const hi = personaWarning(p, forced, all, DEMO).hi;
+        expect(hi, `${src.id} ${p.id}`).not.toMatch(/नं\.\d+ तेजी से घट/);
+        expect(hi, `${src.id} ${p.id}`).not.toMatch(/पानी[^।,]*घट रही/);
+      }
+    }
+    const tw6 = all.find((s) => s.id === "TH-06")!;
+    const w = personaWarning(PERSONAS.find((p) => p.id === "household")!, { ...tw6, status: { ...tw6.status, tier: "watch" } }, all, DEMO);
+    expect(w.hi).toContain("बावड़ी नं.6 का पानी तेजी से घट रहा");
+  });
+});
+
 describe("nearestSafe", () => {
   const allSafe: Candidate[] = sources.map((s) => ({ source: s, tier: "safe" as DisplayTier }));
 
