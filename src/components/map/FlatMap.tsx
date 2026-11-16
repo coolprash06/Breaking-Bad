@@ -13,8 +13,8 @@ import { geoGraticule, geoMercator, geoPath } from "d3-geo";
 import type { GeoBundle } from "@/lib/geo/boundaries";
 import { THAR_KUTCH_FRAME } from "@/lib/geo/boundaries";
 import type { SourceView } from "@/lib/view";
-import type { DisplayTier } from "@/lib/alerts/tiers";
 import { RISK_UI, RiskShape, shortConfidence } from "./RiskMarker";
+import { clusterMarkers, SEVERITY } from "./cluster";
 
 export interface ZoomApi {
   zoomIn(): void;
@@ -53,7 +53,6 @@ const MIN_K = 1;
 const MAX_K = 24;
 const FOCUS_K = 4;
 const CLUSTER_PX = 24; // markers closer than this on screen are clustered
-const SEVERITY: Record<DisplayTier, number> = { emergency: 0, warning: 1, nodata: 2, watch: 3, safe: 4 };
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 /** Zoom steps used to decide when to re-cluster (about every 26% of zoom). */
@@ -452,32 +451,20 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, altId, 
         Number(isRelevant(b)) - Number(isRelevant(a)) ||
         SEVERITY[a.status.tier] - SEVERITY[b.status.tier],
     );
-    const used = new Set<string>();
-    const placed: Placed[] = [];
-    for (const s of order) {
-      if (used.has(s.id)) continue;
-      used.add(s.id);
-      const [x, y] = pos.get(s.id)!;
-      // `order` puts the selected source first, so it always leads its cluster.
-      // The selected source and its alternative are never swallowed into a cluster.
-      const pinned = (id: string) => id === selectedId || id === altId;
-      const members = pinned(s.id)
-        ? [s]
-        : [s, ...order.filter((o) => !used.has(o.id) && !pinned(o.id) && Math.hypot(pos.get(o.id)![0] - x, pos.get(o.id)![1] - y) < r)];
-      members.forEach((m) => used.add(m.id));
-      if (members.length === 1) {
-        placed.push({ kind: "one", ids: [s.id], x, y, lead: s });
-      } else {
-        const lead = members.find((m) => m.id === selectedId) ?? [...members].sort((a, b) => SEVERITY[a.status.tier] - SEVERITY[b.status.tier])[0];
-        placed.push({
-          kind: "cluster",
-          ids: members.map((m) => m.id),
-          x: members.reduce((a, m) => a + pos.get(m.id)![0], 0) / members.length,
-          y: members.reduce((a, m) => a + pos.get(m.id)![1], 0) / members.length,
-          lead,
-        });
-      }
-    }
+    // The selected source seeds first; the cluster icon is always its most urgent member.
+    const byId = new Map(sources.map((s) => [s.id, s]));
+    const groups = clusterMarkers(
+      order.map((s) => ({ id: s.id, x: pos.get(s.id)![0], y: pos.get(s.id)![1], tier: s.status.tier })),
+      r,
+    );
+    const placed: Placed[] = groups.map((g) => ({
+      kind: g.ids.length === 1 ? "one" : "cluster",
+      ids: g.ids,
+      x: g.x,
+      y: g.y,
+      lead: byId.get(g.leadId)!,
+    }));
+    const has = (p: Placed, id: string | null) => !!id && p.ids.includes(id);
 
     // Labels: selected + alerting relevant singles. Try right, left, below; drop if
     // the box would cover another marker or label (screen px at this zoom step).
@@ -489,9 +476,9 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, altId, 
     }));
     const labels: { id: string; x: number; y: number; dx: number; dy: number; anchor: "start" | "end" | "middle"; name: string; sub: string }[] = [];
     const want = placed.filter(
-      (p) => p.lead.id === selectedId || p.lead.id === altId || (p.kind === "one" && isRelevant(p.lead) && p.lead.status.tier !== "safe"),
+      (p) => has(p, selectedId) || has(p, altId) || (p.kind === "one" && isRelevant(p.lead) && p.lead.status.tier !== "safe"),
     );
-    const rank = (p: Placed) => (p.lead.id === selectedId ? 2 : p.lead.id === altId ? 1 : 0);
+    const rank = (p: Placed) => (has(p, selectedId) ? 2 : has(p, altId) ? 1 : 0);
     want.sort((a, b) => rank(b) - rank(a));
     for (const p of want) {
       const name = p.lead.name;
@@ -521,6 +508,7 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, altId, 
         if (p.kind === "cluster") {
           const rel = p.ids.some((id) => isRelevant(sources.find((x) => x.id === id)!));
           const sel = p.ids.includes(selectedId ?? "");
+          const hasAlt = !sel && p.ids.includes(altId ?? "");
           return (
             <g
               key={`c-${p.ids.join("-")}`}
@@ -540,6 +528,7 @@ const MarkerLayer = memo(function MarkerLayer({ at, sources, selectedId, altId, 
                   <rect x={-17} y={-15} width={40} height={30} rx={15} fill="none" stroke="var(--lab)" strokeWidth={1.6} />
                 </>
               )}
+              {hasAlt && <rect x={-17} y={-15} width={40} height={30} rx={15} fill="none" stroke="var(--lab)" strokeWidth={1.6} strokeDasharray="4 3" />}
               <rect x={-13} y={-11} width={32} height={22} rx={11} fill="var(--panel)" stroke={RISK_UI[s.status.tier].color} strokeWidth={1.3} strokeDasharray="3 2" />
               <RiskShape tier={s.status.tier} confidence={1} size={6} />
               <text x={12} y={4} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={10.5} fontWeight={700} fill="var(--text)">

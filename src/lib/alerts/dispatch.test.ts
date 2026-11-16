@@ -3,6 +3,7 @@ import { buildDispatch } from "@/lib/api/dispatchView";
 import { escalations } from "./dispatch";
 import type { SourceLite } from "./warnings";
 import { addDays } from "@/lib/time";
+import { PERSONAS, receivesTier } from "@/config/personas";
 
 const DEMO = "2026-11-16";
 
@@ -26,6 +27,33 @@ describe("dispatch from the engine", () => {
     const again = buildDispatch(addDays(DEMO, 14), [...sent, ...later.messages.map((m) => m.key)]);
     expect(again.messages).toHaveLength(0);
   }, 60_000);
+
+  it("alert fatigue: Watch goes only to the Panchayat and officers; field users from Warning up, or to check a Grey source", () => {
+    let all = [...base.messages];
+    let keys = [...sent];
+    for (const d of [7, 14, 21, 28, 35, 42]) {
+      const r = buildDispatch(addDays(DEMO, d), keys);
+      all = [...all, ...r.messages];
+      keys = [...keys, ...r.messages.map((m) => m.key)];
+    }
+    const watch = all.filter((m) => m.tier === "watch");
+    expect(watch.length).toBeGreaterThan(0);
+    for (const m of watch) expect(`${m.sourceId} ${m.personaId} ${m.category}`).toMatch(/ manage$/);
+    for (const m of all.filter((x) => x.category !== "manage")) expect(["warning", "emergency", "nodata"]).toContain(m.tier);
+    // Grey sources still ask their field users to check and reply.
+    const grey = all.filter((m) => m.tier === "nodata" && m.category !== "manage");
+    for (const m of grey) expect(m.text.en).toContain("reply 1 = low, 2 = fine");
+  }, 120_000);
+
+  it("receivesTier encodes the rule per persona", () => {
+    const herder = PERSONAS.find((p) => p.id === "herder")!;
+    const panchayat = PERSONAS.find((p) => p.id === "panchayat")!;
+    expect(receivesTier(herder, "watch")).toBe(false);
+    expect(receivesTier(herder, "warning")).toBe(true);
+    expect(receivesTier(herder, "nodata")).toBe(true);
+    expect(receivesTier(panchayat, "watch")).toBe(true);
+    expect(receivesTier(panchayat, "safe")).toBe(false);
+  });
 
   it("only escalations send: stepping back down to a lower tier sends nothing", () => {
     const fake = (tier: SourceLite["status"]["tier"]) => [{ id: "X", status: { tier } } as unknown as SourceLite];

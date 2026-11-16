@@ -120,7 +120,12 @@ export default function BasicPhone({ persona, inbox, freshIds, replies, lang, on
         </div>
 
         <div className="flex justify-between border-t border-dashed border-[var(--lcd-dim)] px-2 py-0.5 text-[10px] font-bold">
-          <span className={hi ? "" : "font-hindi"}>{hi ? "ENG" : "हिंदी"}</span>
+          {/* Left soft key: a language switch, the active side shown inverted. */}
+          <span className="flex items-center gap-0.5" aria-hidden>
+            <span className={`px-0.5 ${hi ? "" : "inv"}`}>EN</span>
+            <span>⇄</span>
+            <span className={`font-hindi px-0.5 font-normal ${hi ? "inv" : ""}`}>हिं</span>
+          </span>
           <span>{i > 0 ? "Newest" : ""}</span>
         </div>
       </div>
@@ -128,7 +133,8 @@ export default function BasicPhone({ persona, inbox, freshIds, replies, lang, on
       {/* Soft keys + D-pad */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <div className="grid gap-1.5">
-          <button className="wc-key h-6 text-[9px]" onClick={() => onLang(hi ? "en" : "hi")} aria-label={hi ? "Show in English" : "Show in Hindi"}>
+          <button className="wc-key h-6 text-[9px]" onClick={() => onLang(hi ? "en" : "hi")}
+            aria-label={`Language switch: showing ${hi ? "Hindi" : "English"}. Press to show ${hi ? "English" : "Hindi"}.`}>
             ─
           </button>
           <span className="wc-key grid h-6 place-items-center text-[11px] text-[#3fd17a]" aria-hidden>

@@ -58,7 +58,11 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
   const [alt, setAlt] = useState<{ fromId: string; toId: string } | null>(null);
   const [dispatch, setDispatch] = useState<DispatchState>({ messages: initialDispatch, replies: [], fresh: NO_FRESH });
   const [phoneLang, setPhoneLang] = useState<Lang | null>(null);
-  /** Message to open on the phone; `n` remounts the phone on each request. */
+  /**
+   * Message explicitly opened on the phone (from the dispatch log); `n` remounts the
+   * phone on each request. Otherwise the phone opens on the selected source's newest
+   * message for this persona.
+   */
   const [phoneOpen, setPhoneOpen] = useState<{ id: string | null; n: number }>({ id: null, n: 0 });
 
   const isRelevant = useMemo(() => relevantFor(tab), [tab]);
@@ -110,10 +114,12 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
     focusSource(id);
   };
 
-  /** Open a logged message on the phone: switch to that persona's tab and inbox. */
+  /** Open a logged message on the phone: select its source and switch to that persona's tab and inbox. */
   const openOnPhone = (m: DispatchMessage) => {
     setTab(m.category);
     setPersonaId(m.personaId);
+    setSelectedId(m.sourceId);
+    setAlt((a) => (a && a.fromId === m.sourceId ? a : null));
     setPhoneOpen((o) => ({ id: m.id, n: o.n + 1 }));
   };
 
@@ -170,6 +176,9 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
     [dispatch.messages, personaId],
   );
   const lang: Lang = phoneLang ?? defaultLang(persona);
+  // An explicit pick from the log wins while it belongs to the selected source.
+  const picked = inbox.find((m) => m.id === phoneOpen.id && m.sourceId === selectedId);
+  const phoneStart = picked?.id ?? inbox.find((m) => m.sourceId === selectedId)?.id ?? null;
   const sentHere = useMemo(() => dispatch.messages.filter((m) => m.sourceId === selectedId), [dispatch.messages, selectedId]);
   const repliesHere = useMemo(() => dispatch.replies.filter((r) => r.sourceId === selectedId), [dispatch.replies, selectedId]);
 
@@ -265,7 +274,7 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
               </select>
             </label>
             <BasicPhone
-              key={`${personaId}|${phoneOpen.n}`}
+              key={`${personaId}|${selectedId}|${phoneOpen.n}`}
               persona={persona}
               inbox={inbox}
               freshIds={dispatch.fresh}
@@ -273,8 +282,13 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
               lang={lang}
               onLang={setPhoneLang}
               onReply={reply}
-              openId={phoneOpen.id}
+              openId={phoneStart}
             />
+            {selected && !inbox.some((m) => m.sourceId === selected.id) && (
+              <p className="text-center font-mono text-[11px] leading-snug text-muted">
+                No SMS about {selected.name} for this group{inbox.length ? ": showing the newest message" : ""}.
+              </p>
+            )}
           </div>
           <div className="grid min-w-0 content-start gap-2.5">
             <div className="wc-label">
@@ -288,8 +302,9 @@ export default function Dashboard({ initial, initialDispatch }: { initial: Sourc
               onOpen={openOnPhone}
             />
             <p className="font-mono text-[11px] leading-relaxed text-muted">
-              Sent when a source&apos;s tier escalates on the batch clock (never twice for the same source and tier). Field users get Hindi,
-              officers English. In a real deployment these go out through a registered SMS sender ID (DLT in India) via an SMS gateway.
+              Sent when a source&apos;s tier escalates on the batch clock (never twice for the same source and tier). To avoid false
+              alarms, a Watch goes only to the Panchayat and officers; field users are warned from Warning upward, and are asked to check
+              a source whose sensor has gone silent. Field users get Hindi, officers English. In a real deployment these go out through a registered SMS sender ID (DLT in India) via an SMS gateway.
             </p>
           </div>
         </div>

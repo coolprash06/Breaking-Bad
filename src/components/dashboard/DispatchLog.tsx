@@ -30,14 +30,15 @@ export default function DispatchLog({ messages, replies, freshIds, demoDate, onO
     if (da !== db) return da < db ? 1 : -1;
     return a.kind === b.kind ? 0 : a.kind === "reply" ? -1 : 1;
   });
-  const people = messages.reduce((a, m) => a + (m.recipients.unit === "households" ? m.recipients.count : 0), 0);
+  // Every phone a message went to: households, herders, travellers, tanker operators, farms and officer desks.
+  const recipients = messages.reduce((a, m) => a + m.recipients.count, 0);
 
   return (
     <div className="grid min-w-0 content-start gap-2">
       <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted">
         <DataBadge provenance="SIMULATED" title="No SMS is really sent: delivery is simulated in the demo" />
         <span>
-          {messages.length} SMS groups · {new Set(messages.map((m) => m.key)).size} alerts · {people} households reached · {replies.length} field
+          {messages.length} SMS groups · {new Set(messages.map((m) => m.key)).size} alerts · {recipients.toLocaleString("en-IN")} recipients · {replies.length} field
           {replies.length === 1 ? " reply" : " replies"}
         </span>
       </div>

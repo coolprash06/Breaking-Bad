@@ -8,6 +8,8 @@
  *  - Going Grey (no data) sends one "please check and reply" message.
  *  - Never twice for the same source + tier (dedupe key `${sourceId}|${tier}`).
  *  - Recipients: every persona that uses the source (see recipientsFor), plus officers.
+ *    At Watch only the Panchayat and officers are told; field users from Warning up
+ *    (and for Grey, the "please check and reply" request). See receivesTier.
  * Delivery is SIMULATED: messages go to the in-app basic phone and the dispatch log.
  */
 import { PERSONAS, defaultLang, recipientsFor, type Recipients } from "@/config/personas";

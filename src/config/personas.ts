@@ -142,6 +142,19 @@ export function defaultLang(p: Persona): "en" | "hi" {
   return p.category === "manage" ? "en" : "hi";
 }
 
+/**
+ * Alert-fatigue rule (our answer to the false-alarm desert rule): a Watch is only
+ * "dropping faster than usual", so it goes to the Panchayat and officers, who can
+ * check before anyone is alarmed. Field users are warned from Warning upward. A Grey
+ * (no data) source still asks its field users to check and reply 1 / 2, since that
+ * asks for help rather than raising an alarm.
+ */
+export function receivesTier(p: Persona, tier: string): boolean {
+  if (tier === "safe") return false;
+  if (p.category === "manage") return true;
+  return tier === "warning" || tier === "emergency" || tier === "nodata";
+}
+
 export interface Recipients {
   count: number;
   unit: string;
@@ -154,13 +167,14 @@ export interface Recipients {
  *  bathing: ~1 in 3 households             tankers: 2 per large drinking source
  *  travellers: a 25-phone route list at stepwells and wells on routes
  *  farmers: one per farm                    officers: one desk each
- * Returns null when this persona does not use the source.
+ * Returns null when this persona does not use the source, or is not told at this tier.
  */
 export function recipientsFor(
   p: Persona,
   s: { type: string; usedBy: string[]; animalCapable: boolean; people: { households: number; animals: number; farms: number } },
   opts: { needsTankers?: boolean; tier?: string } = {},
 ): Recipients | null {
+  if (opts.tier && !receivesTier(p, opts.tier)) return null;
   const { households, animals, farms } = s.people;
   const uses = (c: string) => s.usedBy.includes(c);
   switch (p.id) {
@@ -179,7 +193,7 @@ export function recipientsFor(
     case "panchayat":
       return { count: 1, unit: "Panchayat office" };
     case "district":
-      return opts.tier === "watch" ? null : { count: 1, unit: "district water office" };
+      return { count: 1, unit: "district water office" };
     case "ngo":
       return opts.tier === "emergency" || opts.needsTankers ? { count: 1, unit: "NGO desk" } : null;
     default:

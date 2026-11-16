@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { personasFor, PUMP_CUT, PURPOSE_TABS, type Persona } from "@/config/personas";
+import { personasFor, PUMP_CUT, PURPOSE_TABS, receivesTier, type Persona } from "@/config/personas";
 import { personaWarning, type ScenarioLite } from "@/lib/alerts/warnings";
 import { smsInfo } from "@/lib/sms/segments";
 import { formatKm } from "@/lib/alerts/nearest";
@@ -105,6 +105,8 @@ function PersonaCard({
   const pump = usePumpScenario(source, asOf, on && p.id === "farmer");
   const w = on && source ? personaWarning(p, source, sources, asOf, { scenario: pump.lite }) : null;
   const seg = w ? smsInfo(w.text).segments : 0;
+  /** Field users are not messaged at Watch (alert-fatigue rule). */
+  const held = !!w && !!source && w.isAlert && !receivesTier(p, source.status.tier);
   return (
     <div
       className="wc-card grid gap-1 px-3 py-2.5 text-left"
@@ -120,9 +122,14 @@ function PersonaCard({
       {w && source && (
         <div className="mt-1 grid gap-1.5">
           <div className="font-mono text-[10px] tracking-[0.14em] text-faint uppercase">
-            {w.isAlert ? "Warning they receive" : "Status they receive"} · {source.name}
+            {!w.isAlert ? "Status they would see" : held ? "Not sent at Watch · preview" : "Warning they receive"} · {source.name}
           </div>
-          <div className="grid gap-1.5 rounded-md border border-dashed border-line2 bg-panel2 px-2.5 py-2">
+          {held && (
+            <p className="text-[12px] leading-snug text-muted">
+              At Watch only the Panchayat and officers are told, to avoid false alarms. This group gets it from Warning upward.
+            </p>
+          )}
+          <div className={`grid gap-1.5 rounded-md border border-dashed border-line2 bg-panel2 px-2.5 py-2 ${held ? "opacity-60" : ""}`}>
             <p className="font-mono text-[12px] leading-relaxed">{w.text}</p>
             <p className="font-hindi text-[13px] leading-relaxed opacity-85" lang="hi">
               {w.hi}

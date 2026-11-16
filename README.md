@@ -51,6 +51,7 @@ A false alarm costs trust; a missed one costs lives. WellCast uses:
 - **Confidence in every message**, e.g. "70% sure."
 - **No duplicates:** the same source and tier is never sent twice, and nothing is sent when a source improves.
 - **Honesty:** if no suitable safe source is within reach, the warning says so and tells people to contact the Panchayat, rather than sending them hundreds of kilometres away.
+- **Watch goes to officials only:** at Watch level, only the Panchayat and district water officer are told, so they can keep an eye on it. Villagers, herders and farmers are only texted from Warning upward, so they don't learn to ignore alerts.
 
 ## Handling messy desert data
 
