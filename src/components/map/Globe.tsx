@@ -4,23 +4,29 @@
  * Interactive 3D globe (react-three-fiber). Rest of the world = plain land with
  * no borders; India = Survey of India boundary, highlighted. Water sources glow.
  *
+ * Zoom is capped: past the cap (or on clicking India / a source) the globe keeps
+ * flying in and hands off to the flat map, so it reads as one continuous move.
+ *
  * Performance safeguards:
  *  - loaded lazily (next/dynamic, ssr: false) by MapStage
  *  - pixel ratio capped at 1.5
  *  - frameloop="demand": nothing renders unless something moves
- *  - slow-frame detection during the intro -> onSlow() and MapStage falls back to 2D
+ *  - slow-frame detection during animations -> onSlow() and MapStage falls back to 2D
  *  - WebGL context loss -> onSlow()
  */
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
-import { geoContains, geoEquirectangular, geoGraticule10, geoPath } from "d3-geo";
+import { geoContains, geoDistance, geoEquirectangular, geoGraticule10, geoPath } from "d3-geo";
 import type { GeoBundle } from "@/lib/geo/boundaries";
 import type { DisplayTier } from "@/lib/alerts/tiers";
 import type { ZoomApi } from "./FlatMap";
 
 export interface GlobeApi extends ZoomApi {
-  flyToRegion(done: () => void): void;
+  /** Fly toward (lat, lon); `onHandoff` fires part-way, while the globe keeps moving. */
+  flyTo(lat: number, lon: number, onHandoff: () => void): void;
+  /** Start close over (lat, lon) and pull back to the home view (map -> globe). */
+  flyOut(lat: number, lon: number): void;
 }
 
 export interface GlobeMarker {
@@ -37,17 +43,22 @@ interface Props {
   /** Changes whenever the colour theme changes, so textures are redrawn. */
   themeKey: string;
   onIndiaClick(): void;
+  onSourceClick(id: string): void;
+  /** The user zoomed past the cap while looking at (lat, lon). */
+  onZoomThrough(lat: number, lon: number): void;
   onSlow(reason: string): void;
 }
 
 const DEG = Math.PI / 180;
 const HOME_DIST = 3.9;
-const MIN_DIST = 1.45;
+/** User zoom stops here; closer than this the outline and markers would blur. */
+const MIN_DIST = 2.0;
 const MAX_DIST = 6;
+const HANDOFF_DIST = 1.18;
+const HANDOFF_AT = 0.55; // fraction of the fly-in at which the map takes over
 /** Rotation that puts (lat, lon) facing the camera. */
 const face = (lat: number, lon: number) => ({ rx: lat * DEG, ry: -Math.PI / 2 - lon * DEG });
 const INDIA = face(22.5, 79);
-const THAR_KUTCH = face(25.8, 71);
 
 function latLonToVec(lat: number, lon: number, r: number): THREE.Vector3 {
   const la = lat * DEG;
@@ -55,11 +66,18 @@ function latLonToVec(lat: number, lon: number, r: number): THREE.Vector3 {
   return new THREE.Vector3(r * Math.cos(la) * Math.cos(lo), r * Math.sin(la), -r * Math.cos(la) * Math.sin(lo));
 }
 
+/** Where the camera is looking, as [lon, lat]. Inverse of face(). */
+function centreOf(m: { rx: number; ry: number }): [number, number] {
+  let lon = (-Math.PI / 2 - m.ry) / DEG;
+  lon = ((((lon + 180) % 360) + 360) % 360) - 180;
+  return [lon, m.rx / DEG];
+}
+
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-/** Equirectangular texture: sea, faint graticule, borderless land, glowing India. */
+/** Equirectangular texture: sea, faint graticule, borderless land, India fill with a soft edge. */
 function makeSurfaceTexture(geo: GeoBundle): THREE.CanvasTexture {
   const W = 2048;
   const H = 1024;
@@ -87,11 +105,12 @@ function makeSurfaceTexture(geo: GeoBundle): THREE.CanvasTexture {
   path(geo.india);
   ctx.fillStyle = cssVar("--india");
   ctx.fill();
+  // Small, soft glow only: the crisp outline is a separate 3D line.
   ctx.save();
   ctx.shadowColor = cssVar("--lab-glow");
-  ctx.shadowBlur = 14;
-  ctx.strokeStyle = cssVar("--india-line");
-  ctx.lineWidth = 2;
+  ctx.shadowBlur = 5;
+  ctx.strokeStyle = cssVar("--lab-glow");
+  ctx.lineWidth = 1.2;
   ctx.stroke();
   ctx.restore();
 
@@ -108,19 +127,20 @@ function makeDotTexture(soft: boolean): THREE.CanvasTexture {
   const ctx = c.getContext("2d")!;
   const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
   if (soft) {
-    g.addColorStop(0, "rgba(255,255,255,0.95)");
-    g.addColorStop(0.25, "rgba(255,255,255,0.5)");
+    g.addColorStop(0, "rgba(255,255,255,0.85)");
+    g.addColorStop(0.3, "rgba(255,255,255,0.35)");
     g.addColorStop(1, "rgba(255,255,255,0)");
   } else {
     g.addColorStop(0, "rgba(255,255,255,1)");
-    g.addColorStop(0.6, "rgba(255,255,255,1)");
-    g.addColorStop(0.75, "rgba(255,255,255,0)");
+    g.addColorStop(0.55, "rgba(255,255,255,1)");
+    g.addColorStop(0.7, "rgba(255,255,255,0)");
   }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, s, s);
   return new THREE.CanvasTexture(c);
 }
 
+/* Thin rim: a slightly larger back-face shell, bright only right at the limb. */
 const ATMO_VERT = /* glsl */ `
 varying vec3 vNormal;
 void main() {
@@ -132,7 +152,8 @@ uniform vec3 uColor;
 uniform float uStrength;
 varying vec3 vNormal;
 void main() {
-  float i = pow(clamp(0.62 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0, 1.0), 4.0) * uStrength;
+  float rim = clamp(0.5 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0, 1.0);
+  float i = pow(rim, 6.0) * uStrength;
   gl_FragColor = vec4(uColor, i);
 }`;
 
@@ -141,21 +162,48 @@ interface Motion {
   ry: number;
   dist: number;
 }
+interface Tween {
+  from: Motion;
+  to: Motion;
+  t0: number;
+  ms: number;
+  done?: () => void;
+  mid?: { at: number; fn: () => void; fired: boolean };
+}
 
-function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) {
+function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSourceClick, onZoomThrough, onSlow }: Props) {
   const group = useRef<THREE.Group>(null);
   const { camera, invalidate, gl } = useThree();
   const reduced = useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
   const cur = useRef<Motion>(reduced ? { ...INDIA, dist: HOME_DIST } : { rx: 0.2, ry: INDIA.ry + 1.4, dist: HOME_DIST + 0.6 });
-  const anim = useRef<{ from: Motion; to: Motion; t0: number; ms: number; done?: () => void } | null>(null);
+  const anim = useRef<Tween | null>(null);
   const frames = useRef<number[]>([]);
   const slowReported = useRef(false);
   const dragRef = useRef<{ x: number; y: number; m: Motion } | null>(null);
+  const throughFired = useRef(false);
+  const cb = useRef({ onZoomThrough, onSlow });
+  useEffect(() => {
+    cb.current = { onZoomThrough, onSlow };
+  }, [onZoomThrough, onSlow]);
 
-  const tweenTo = (to: Partial<Motion>, ms: number, done?: () => void) => {
+  const tweenTo = (to: Partial<Motion>, ms: number, done?: () => void, mid?: Tween["mid"]) => {
     const from = { ...cur.current };
-    anim.current = { from, to: { ...from, ...to }, t0: performance.now(), ms, done };
+    anim.current = { from, to: { ...from, ...to }, t0: performance.now(), ms: reduced ? 1 : ms, done, mid };
     invalidate();
+  };
+
+  /** True if a zoom-in step is allowed; at the cap, hand off to the map instead. */
+  const zoomInStep = (factor: number) => {
+    const next = cur.current.dist / factor;
+    if (next < MIN_DIST) {
+      if (!throughFired.current) {
+        throughFired.current = true;
+        const [lon, lat] = centreOf(cur.current);
+        cb.current.onZoomThrough(lat, lon);
+      }
+      return false;
+    }
+    return true;
   };
 
   // Intro: ease round to India, then stop rendering.
@@ -166,14 +214,33 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
 
   useEffect(() => {
     apiRef.current = {
-      zoomIn: () => tweenTo({ dist: Math.max(MIN_DIST, cur.current.dist / 1.3) }, 300),
-      zoomOut: () => tweenTo({ dist: Math.min(MAX_DIST, cur.current.dist * 1.3) }, 300),
-      reset: () => tweenTo({ ...INDIA, dist: HOME_DIST }, 800),
-      flyToRegion: (done) => tweenTo({ ...THAR_KUTCH, dist: MIN_DIST }, reduced ? 1 : 1100, done),
+      zoomIn: () => {
+        if (zoomInStep(1.3)) tweenTo({ dist: Math.max(MIN_DIST, cur.current.dist / 1.3) }, 300);
+      },
+      zoomOut: () => {
+        throughFired.current = false;
+        tweenTo({ dist: Math.min(MAX_DIST, cur.current.dist * 1.3) }, 300);
+      },
+      reset: () => {
+        throughFired.current = false;
+        tweenTo({ ...INDIA, dist: HOME_DIST }, 800);
+      },
+      flyTo: (lat, lon, onHandoff) => {
+        throughFired.current = true;
+        const target = face(lat, lon);
+        // Take the short way round.
+        const dy = ((((target.ry - cur.current.ry + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) - Math.PI;
+        tweenTo({ rx: target.rx, ry: cur.current.ry + dy, dist: HANDOFF_DIST }, 1100, undefined, { at: HANDOFF_AT, fn: onHandoff, fired: false });
+      },
+      flyOut: (lat, lon) => {
+        throughFired.current = false;
+        cur.current = { ...face(lat, lon), dist: HANDOFF_DIST + 0.3 };
+        tweenTo({ ...INDIA, dist: HOME_DIST }, 1000);
+      },
     };
   });
 
-  // Drag to turn, wheel to zoom.
+  // Drag to turn, wheel to zoom (with hand-off past the cap).
   useEffect(() => {
     const el = gl.domElement;
     const down = (e: PointerEvent) => {
@@ -197,12 +264,18 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
       anim.current = null;
-      cur.current = { ...cur.current, dist: Math.max(MIN_DIST, Math.min(MAX_DIST, cur.current.dist * (e.deltaY > 0 ? 1.1 : 1 / 1.1))) };
+      const factor = Math.exp(e.deltaY * 0.0015);
+      if (factor < 1 && !zoomInStep(1 / factor)) {
+        cur.current = { ...cur.current, dist: MIN_DIST };
+      } else {
+        if (factor > 1) throughFired.current = false;
+        cur.current = { ...cur.current, dist: Math.max(MIN_DIST, Math.min(MAX_DIST, cur.current.dist * factor)) };
+      }
       invalidate();
     };
     const lost = (e: Event) => {
       e.preventDefault();
-      onSlow("WebGL context lost");
+      cb.current.onSlow("WebGL context lost");
     };
     el.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
@@ -216,7 +289,7 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
       el.removeEventListener("wheel", wheel);
       el.removeEventListener("webglcontextlost", lost);
     };
-  }, [gl, invalidate, onSlow]);
+  }, [gl, invalidate]);
 
   useFrame((_, delta) => {
     const a = anim.current;
@@ -228,6 +301,10 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
         ry: a.from.ry + (a.to.ry - a.from.ry) * e,
         dist: a.from.dist + (a.to.dist - a.from.dist) * e,
       };
+      if (a.mid && !a.mid.fired && t >= a.mid.at) {
+        a.mid.fired = true;
+        a.mid.fn();
+      }
       if (t < 1) invalidate();
       else {
         anim.current = null;
@@ -240,7 +317,7 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
           const sorted = [...frames.current].sort((x, y) => x - y);
           if (sorted[20] > 0.055) {
             slowReported.current = true;
-            onSlow("Frames too slow for 3D");
+            cb.current.onSlow("Frames too slow for 3D");
           }
         }
       }
@@ -256,8 +333,8 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
   // Theme-dependent resources.
   const surface = useMemo(() => makeSurfaceTexture(geo), [geo, themeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const atmoUniforms = useMemo(
-    () => ({ uColor: { value: new THREE.Color(cssVar("--lab")) }, uStrength: { value: 1.6 } }),
-    [themeKey], // eslint-disable-line react-hooks/exhaustive-deps
+    () => ({ uColor: { value: new THREE.Color(cssVar("--lab")) }, uStrength: { value: themeKey === "light" ? 2.4 : 3.2 } }),
+    [themeKey],
   );
   const indiaLine = useMemo(() => {
     const pts: THREE.Vector3[] = [];
@@ -277,7 +354,7 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
     const pos: number[] = [];
     const col: number[] = [];
     for (const m of markers) {
-      const v = latLonToVec(m.lat, m.lon, 1.012);
+      const v = latLonToVec(m.lat, m.lon, 1.004);
       pos.push(v.x, v.y, v.z);
       const c = new THREE.Color(cssVar(`--risk-${m.tier}`));
       col.push(c.r, c.g, c.b);
@@ -289,6 +366,7 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
   }, [markers, themeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const glowTex = useMemo(() => makeDotTexture(true), []);
   const coreTex = useMemo(() => makeDotTexture(false), []);
+  const dpr = gl.getPixelRatio();
 
   useEffect(() => () => surface.dispose(), [surface]);
   useEffect(() => () => markerGeo.dispose(), [markerGeo]);
@@ -297,9 +375,19 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (e.delta > 4 || !e.uv) return;
-    const lon = e.uv.x * 360 - 180;
-    const lat = e.uv.y * 180 - 90;
-    if (geoContains(geo.indiaGlobe, [lon, lat])) onIndiaClick();
+    const ll: [number, number] = [e.uv.x * 360 - 180, e.uv.y * 180 - 90];
+    // A source within ~1.2 degrees of the click wins over "India".
+    let best: GlobeMarker | null = null;
+    let bestD = 1.2 * DEG;
+    for (const m of markers) {
+      const d = geoDistance(ll, [m.lon, m.lat]);
+      if (d < bestD) {
+        bestD = d;
+        best = m;
+      }
+    }
+    if (best) onSourceClick(best.id);
+    else if (geoContains(geo.indiaGlobe, ll)) onIndiaClick();
   };
 
   return (
@@ -312,25 +400,19 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
           <meshStandardMaterial map={surface} roughness={1} metalness={0} />
         </mesh>
         <lineSegments geometry={indiaLine}>
-          <lineBasicMaterial color={indiaColor} transparent opacity={0.9} />
+          <lineBasicMaterial color={indiaColor} transparent opacity={0.95} />
         </lineSegments>
+        {/* Markers keep a fixed screen size at every zoom (no blobs). */}
         <points geometry={markerGeo}>
-          <pointsMaterial map={glowTex} size={0.075} sizeAttenuation vertexColors transparent depthWrite={false} />
+          <pointsMaterial map={glowTex} size={16 * dpr} sizeAttenuation={false} vertexColors transparent depthWrite={false} />
         </points>
         <points geometry={markerGeo}>
-          <pointsMaterial map={coreTex} size={0.018} sizeAttenuation vertexColors transparent depthWrite={false} alphaTest={0.3} />
+          <pointsMaterial map={coreTex} size={5 * dpr} sizeAttenuation={false} vertexColors transparent depthWrite={false} alphaTest={0.3} />
         </points>
       </group>
-      <mesh scale={1.1}>
+      <mesh scale={1.035}>
         <sphereGeometry args={[1, 64, 48]} />
-        <shaderMaterial
-          vertexShader={ATMO_VERT}
-          fragmentShader={ATMO_FRAG}
-          uniforms={atmoUniforms}
-          side={THREE.BackSide}
-          transparent
-          depthWrite={false}
-        />
+        <shaderMaterial vertexShader={ATMO_VERT} fragmentShader={ATMO_FRAG} uniforms={atmoUniforms} side={THREE.BackSide} transparent depthWrite={false} />
       </mesh>
     </>
   );
@@ -338,16 +420,16 @@ function Scene({ geo, markers, apiRef, themeKey, onIndiaClick, onSlow }: Props) 
 
 export default function Globe(props: Props) {
   return (
-    <div className="absolute inset-0 cursor-grab active:cursor-grabbing" role="img" aria-label="3D globe with India highlighted. Drag to turn, click India to fly in.">
-    <Canvas
-      dpr={[1, 1.5]}
-      frameloop="demand"
-      flat
-      camera={{ fov: 35, near: 0.1, far: 50, position: [0, 0, HOME_DIST] }}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-    >
-      <Scene {...props} />
-    </Canvas>
+    <div className="absolute inset-0 cursor-grab active:cursor-grabbing" role="img" aria-label="3D globe with India highlighted. Drag to turn, click India or a source to fly in.">
+      <Canvas
+        dpr={[1, 1.5]}
+        frameloop="demand"
+        flat
+        camera={{ fov: 35, near: 0.1, far: 50, position: [0, 0, HOME_DIST] }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      >
+        <Scene {...props} />
+      </Canvas>
     </div>
   );
 }

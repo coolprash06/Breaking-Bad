@@ -429,6 +429,242 @@
         "farms": 3
       },
       "observationWell": true
+    },
+    {
+      "id": "TH-19",
+      "name": "Well #19",
+      "type": "dug_well",
+      "region": "thar",
+      "district": "jaisalmer",
+      "placeLabel": "Village well beside Nadi #1, Jaisalmer",
+      "illustrativeLocation": true,
+      "lat": 26.96,
+      "lon": 70.78,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 40,
+        "animals": 150,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "TH-20",
+      "name": "Tanka #20",
+      "type": "tanka",
+      "region": "thar",
+      "district": "jaisalmer",
+      "placeLabel": "Community tanka, Jaisalmer",
+      "illustrativeLocation": true,
+      "lat": 26.88,
+      "lon": 70.94,
+      "capacityM": 3,
+      "failureLevelM": 0.15,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 8,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "TH-21",
+      "name": "Tanka #21",
+      "type": "tanka",
+      "region": "thar",
+      "district": "jaisalmer",
+      "placeLabel": "Tanka near the beri pits, Jaisalmer",
+      "illustrativeLocation": true,
+      "lat": 27,
+      "lon": 70.72,
+      "capacityM": 3,
+      "failureLevelM": 0.15,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 8,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "TH-22",
+      "name": "Well #22",
+      "type": "dug_well",
+      "region": "thar",
+      "district": "bikaner",
+      "placeLabel": "Village well east of Nadi #9, Bikaner",
+      "illustrativeLocation": true,
+      "lat": 27.975,
+      "lon": 73.425,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 50,
+        "animals": 200,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "TH-23",
+      "name": "Tanka #23",
+      "type": "tanka",
+      "region": "thar",
+      "district": "barmer",
+      "placeLabel": "Village tanka near Borewell #5, Barmer",
+      "illustrativeLocation": true,
+      "lat": 25.72,
+      "lon": 71.48,
+      "capacityM": 3,
+      "failureLevelM": 0.15,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 10,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": false
+    },
+    {
+      "id": "KU-24",
+      "name": "Well #24",
+      "type": "dug_well",
+      "region": "kutch",
+      "district": "banni",
+      "placeLabel": "Village well between Nadi #10 and the virda pits, Banni",
+      "illustrativeLocation": true,
+      "lat": 23.75,
+      "lon": 69.58,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 40,
+        "animals": 180,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "KU-25",
+      "name": "Well #25",
+      "type": "dug_well",
+      "region": "kutch",
+      "district": "banni",
+      "placeLabel": "Herders' well, north Banni",
+      "illustrativeLocation": true,
+      "lat": 23.86,
+      "lon": 69.5,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 20,
+        "animals": 160,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "KU-26",
+      "name": "Well #26",
+      "type": "dug_well",
+      "region": "kutch",
+      "district": "rapar",
+      "placeLabel": "Village well west of Rapar",
+      "illustrativeLocation": true,
+      "lat": 23.585,
+      "lon": 70.645,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 45,
+        "animals": 120,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "KU-27",
+      "name": "Well #27",
+      "type": "dug_well",
+      "region": "kutch",
+      "district": "bhuj",
+      "placeLabel": "Village well east of Bhuj",
+      "illustrativeLocation": true,
+      "lat": 23.22,
+      "lon": 69.69,
+      "capacityM": 10,
+      "failureLevelM": 0.5,
+      "animalCapable": true,
+      "usedBy": [
+        "fetch",
+        "spot"
+      ],
+      "people": {
+        "households": 35,
+        "animals": 140,
+        "farms": 0
+      },
+      "observationWell": true
+    },
+    {
+      "id": "KU-28",
+      "name": "Tanka #28",
+      "type": "tanka",
+      "region": "kutch",
+      "district": "lakhpat",
+      "placeLabel": "Village tanka, Lakhpat",
+      "illustrativeLocation": true,
+      "lat": 23.82,
+      "lon": 68.88,
+      "capacityM": 3,
+      "failureLevelM": 0.15,
+      "animalCapable": false,
+      "usedBy": [
+        "fetch"
+      ],
+      "people": {
+        "households": 10,
+        "animals": 0,
+        "farms": 0
+      },
+      "observationWell": false
     }
   ]
 }

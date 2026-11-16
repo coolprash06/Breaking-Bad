@@ -19,6 +19,8 @@ All simulated data comes from one seeded generator (`npm run generate`, seed 202
 
 Locations are **illustrative** placeholders until the team confirms districts and villages.
 
+There are 28 simulated sources. The 10 numbered #19 to #28 are nearby Safe alternatives, added so that every warning can name somewhere suitable to go. Each source has its own random stream, so adding them left the other 18 sources' data unchanged. One source is kept isolated on purpose: **Stepwell #6 (Phalodi)** has no suitable alternative within any persona's range. Its warning honestly says so and tells people to contact the Panchayat.
+
 ## How the AI works
 
 1. **Learning from data.** The model learns each source's own parameters from its past readings using regression. These are:
@@ -27,7 +29,7 @@ Locations are **illustrative** placeholders until the team confirms districts an
    - usage rate for households, livestock and pumping
    - background trend (seepage, or refill from the surrounding aquifer)
 
-   The method is weighted ridge regression with physical sign constraints, fitted on the change between consecutive valid readings, so sensor gaps are handled naturally. Sensor glitches are removed by a robust outlier filter. Nothing is hand-set per source. The "Learned from data" panel shows each value with its standard error, R² and the number of days used. In tests, the learner recovers the simulator's hidden parameters (for example, pumping rates to within 20%).
+   The method is weighted ridge regression with physical sign constraints, fitted on the change between consecutive valid readings, so sensor gaps are handled naturally. Sensor glitches are removed by a robust outlier filter (residuals beyond 5 robust standard deviations). The level chart marks each rejected reading with a small x: "Sensor glitch - ignored by the model". Nothing is hand-set per source. The "Learned from data" panel shows each value with its standard error, R² and the number of days used. In tests, the learner recovers the simulator's hidden parameters (for example, pumping rates to within 20%).
 2. **Forecast with a confidence range.** A 500-run Monte Carlo ensemble projects the level 17 weeks ahead. Each run varies:
    - the learned parameters, within their errors
    - future usage

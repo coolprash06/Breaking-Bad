@@ -38,6 +38,7 @@ export default function Dashboard({ initial }: { initial: SourcesPayload }) {
   const [personaId, setPersonaId] = useState(personasFor("spot")[0].id);
   const [selectedId, setSelectedId] = useState<string | null>(() => mostUrgent(initial.sources, "spot")?.id ?? null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [focus, setFocus] = useState<{ id: string; n: number } | null>(null);
 
   const isRelevant = useMemo(() => relevantFor(tab), [tab]);
   const selected = data.sources.find((s) => s.id === selectedId) ?? null;
@@ -51,6 +52,12 @@ export default function Dashboard({ initial }: { initial: SourcesPayload }) {
   const select = useCallback((id: string) => {
     setSelectedId(id);
     setSheetOpen(true);
+  }, []);
+
+  /** Select a source and fly the map to it (persona panel links). */
+  const focusSource = useCallback((id: string) => {
+    setSelectedId(id);
+    setFocus((f) => ({ id, n: (f?.n ?? 0) + 1 }));
   }, []);
 
   const changeDate = async (iso: string) => {
@@ -79,10 +86,18 @@ export default function Dashboard({ initial }: { initial: SourcesPayload }) {
 
         <div className="grid grid-cols-1 pb-16 md:grid-cols-[240px_minmax(0,1fr)] md:pb-0 xl:grid-cols-[270px_minmax(0,1fr)_340px]">
           <div className="order-2 border-border md:order-1 md:border-r">
-            <PersonaPanel tab={tab} personaId={personaId} onPersona={setPersonaId} source={selected} sources={data.sources} asOf={data.asOf} />
+            <PersonaPanel
+              tab={tab}
+              personaId={personaId}
+              onPersona={setPersonaId}
+              source={selected}
+              sources={data.sources}
+              asOf={data.asOf}
+              onFocus={focusSource}
+            />
           </div>
           <div className="order-1 h-[58vh] min-h-[420px] md:sticky md:top-0 md:order-2 md:h-[min(780px,calc(100vh-24px))] md:min-h-[560px] md:self-start">
-            <MapStage sources={data.sources} selectedId={selectedId} onSelect={select} isRelevant={isRelevant} />
+            <MapStage sources={data.sources} selectedId={selectedId} onSelect={select} isRelevant={isRelevant} focus={focus} />
           </div>
 
           {/* Source readout: right column on wide screens, full row on tablets, bottom sheet on phones. */}

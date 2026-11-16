@@ -24,7 +24,7 @@ describe("simulated data generator", () => {
   it("covers 15-20 sources, both regions and every source type", () => {
     const s = g.sources.data;
     expect(s.length).toBeGreaterThanOrEqual(15);
-    expect(s.length).toBeLessThanOrEqual(20);
+    expect(s.length).toBeLessThanOrEqual(30);
     expect(new Set(s.map((x) => x.region))).toEqual(new Set(["thar", "kutch"]));
     for (const t of ALL_TYPES) expect(s.some((x) => x.type === t)).toBe(true);
     for (const x of s) expect(x.illustrativeLocation).toBe(true);

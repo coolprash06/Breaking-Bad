@@ -25,12 +25,13 @@ export async function GET(req: NextRequest, ctx: RouteContext<"/api/forecast/[id
   const scenario = Object.keys(cut).length ? compareScenario(source, asOf, cut) : null;
 
   const n = snap.length;
+  const glitches = new Set(fc.model.glitchIdx);
   const from = Math.max(0, n - HISTORY_DAYS);
   const rain = snap.climate.data.districts[source.district].rainMm;
   const values = snap.readings.data[source.id].values;
   const history = [];
   for (let i = from; i < n; i++) {
-    history.push({ date: addDays(snap.timeline.start, i), level: values[i], rain: rain[i] });
+    history.push({ date: addDays(snap.timeline.start, i), level: values[i], rain: rain[i], glitch: glitches.has(i) });
   }
   const forecast = fc.ensemble.band.map((b) => ({
     date: addDays(asOf, b.day),

@@ -4,7 +4,8 @@ import dynamic from "next/dynamic";
 import { Component, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { loadBoundaries, type GeoBundle } from "@/lib/geo/boundaries";
 import type { SourceView } from "@/lib/view";
-import FlatMap, { type ZoomApi } from "./FlatMap";
+import FlatMap, { type MapApi } from "./FlatMap";
+import { THAR_KUTCH_FRAME } from "@/lib/geo/boundaries";
 import type { GlobeApi } from "./Globe";
 import { RISK_ORDER, RISK_UI, RiskIcon } from "./RiskMarker";
 import { useThemeKey } from "@/components/theme/useThemeKey";
@@ -61,9 +62,18 @@ interface Props {
   selectedId: string | null;
   onSelect(id: string): void;
   isRelevant(s: SourceView): boolean;
+  /** Fly to this source (persona panel, readout links). `n` changes on every request. */
+  focus: { id: string; n: number } | null;
 }
 
-export default function MapStage({ sources, selectedId, onSelect, isRelevant }: Props) {
+const REGION_CENTRE = {
+  lat: (THAR_KUTCH_FRAME[0][1] + THAR_KUTCH_FRAME[1][1]) / 2,
+  lon: (THAR_KUTCH_FRAME[0][0] + THAR_KUTCH_FRAME[1][0]) / 2,
+};
+/** Roughly India's box: zooming through the globe here hands off to the map. */
+const nearIndia = (lat: number, lon: number) => lat > 4 && lat < 38 && lon > 66 && lon < 99;
+
+export default function MapStage({ sources, selectedId, onSelect, isRelevant, focus }: Props) {
   const [geo, setGeo] = useState<GeoBundle | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [chosenView, setView] = useState<View>("globe");
@@ -75,7 +85,7 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant }: 
   const fallbackNote =
     capableHere === false ? "3D globe off on this device: showing the 2D map" : failure ? `${failure}: switched to the 2D map` : null;
   const globeApi = useRef<GlobeApi | null>(null);
-  const mapApi = useRef<ZoomApi | null>(null);
+  const mapApi = useRef<MapApi | null>(null);
   const flying = useRef(false);
   const themeKey = useThemeKey();
 
@@ -88,21 +98,61 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant }: 
     setView("map");
   }, []);
 
-  const flyIn = useCallback(() => {
+  const viewRef = useRef<View>(view);
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+  const sourcesRef = useRef(sources);
+  useEffect(() => {
+    sourcesRef.current = sources;
+  }, [sources]);
+
+  /**
+   * One continuous move: the globe flies toward the target and, part-way in,
+   * the map fades in already zooming toward the same spot.
+   */
+  const handOff = useCallback((sourceId: string | null) => {
+    const s = sourceId ? sourcesRef.current.find((x) => x.id === sourceId) : null;
+    if (viewRef.current === "map" || !globeApi.current) {
+      setView("map");
+      mapApi.current?.flyTo(sourceId);
+      return;
+    }
     if (flying.current) return;
-    if (!globeApi.current) return setView("map");
     flying.current = true;
-    globeApi.current.flyToRegion(() => {
+    const target = s ? { lat: s.lat, lon: s.lon } : REGION_CENTRE;
+    globeApi.current.flyTo(target.lat, target.lon, () => {
       flying.current = false;
       setView("map");
+      mapApi.current?.flyTo(sourceId, { intro: true });
     });
   }, []);
 
+  const flyIn = useCallback(() => handOff(null), [handOff]);
+  const onGlobeSource = useCallback(
+    (id: string) => {
+      onSelect(id);
+      handOff(id);
+    },
+    [onSelect, handOff],
+  );
+  const onZoomThrough = useCallback(
+    (lat: number, lon: number) => {
+      if (nearIndia(lat, lon)) handOff(null);
+    },
+    [handOff],
+  );
+
+  // Focus requests from outside (persona panel, readout).
+  useEffect(() => {
+    if (focus) handOff(focus.id);
+  }, [focus, handOff]);
+
   const showGlobe = () => {
-    if (!globeOk) return;
+    if (!globeOk || view === "globe") return;
     setView("globe");
+    globeApi.current?.flyOut(REGION_CENTRE.lat, REGION_CENTRE.lon);
     mapApi.current?.reset();
-    globeApi.current?.reset();
   };
 
   const markers = useMemo(
@@ -121,14 +171,23 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant }: 
       {!geo && !geoError && <Calibrating text="Calibrating boundaries…" />}
 
       {geo && globeOk && (
-        <div className={`absolute inset-0 transition-opacity duration-500 ${view === "globe" ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+        <div className={`absolute inset-0 transition-opacity duration-[450ms] ${view === "globe" ? "opacity-100" : "pointer-events-none opacity-0"}`}>
           <GlobeBoundary onError={() => fallBack("3D globe failed")}>
-            <Globe geo={geo} markers={markers} apiRef={globeApi} themeKey={themeKey} onIndiaClick={flyIn} onSlow={fallBack} />
+            <Globe
+              geo={geo}
+              markers={markers}
+              apiRef={globeApi}
+              themeKey={themeKey}
+              onIndiaClick={flyIn}
+              onSourceClick={onGlobeSource}
+              onZoomThrough={onZoomThrough}
+              onSlow={fallBack}
+            />
           </GlobeBoundary>
         </div>
       )}
       {geo && (
-        <div className={`absolute inset-0 transition-opacity duration-500 ${view === "map" ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+        <div className={`absolute inset-0 transition-opacity duration-[450ms] ${view === "map" ? "opacity-100" : "pointer-events-none opacity-0"}`}>
           <FlatMap geo={geo} sources={sources} selectedId={selectedId} onSelect={onSelect} isRelevant={isRelevant} apiRef={mapApi} />
         </div>
       )}
@@ -179,7 +238,7 @@ export default function MapStage({ sources, selectedId, onSelect, isRelevant }: 
       </div>
 
       <p className="pointer-events-none absolute bottom-3 left-3.5 z-10 max-w-[55%] font-mono text-[10.5px] leading-snug tracking-[0.08em] text-muted">
-        {fallbackNote ?? (view === "globe" ? "DRAG TO TURN · CLICK INDIA TO FLY IN" : "")}
+        {fallbackNote ?? (view === "globe" ? "DRAG TO TURN · CLICK INDIA OR SCROLL IN TO FLY IN" : "")}
       </p>
     </div>
   );

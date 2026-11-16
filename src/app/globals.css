@@ -194,11 +194,11 @@ body::after {
   border-radius: 8px;
   background: var(--panel);
 }
+/* No backdrop-filter: blurring the moving map behind every control costs a repaint per frame. */
 .wc-ctl {
-  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
   border: 1px solid var(--line2);
   border-radius: 6px;
-  backdrop-filter: blur(4px);
 }
 .wc-ctl button {
   font: 500 11px/1 var(--font-mono);
@@ -220,7 +220,10 @@ body::after {
 /* Flat map */
 .wc-map .graticule { fill: none; stroke: var(--line); stroke-width: 0.6; stroke-dasharray: 2 4; }
 .wc-map .land { fill: var(--land); }
-.wc-map .india { fill: var(--india); stroke: var(--india-line); stroke-width: 1.2; filter: drop-shadow(0 0 5px var(--lab-glow)); }
+/* Glow = a wide faint stroke under the crisp one (SVG filters re-rasterise on every zoom frame). */
+.wc-map .india { fill: var(--india); }
+.wc-map .india-glow { fill: none; stroke: var(--lab-glow); stroke-width: 6; stroke-linejoin: round; opacity: 0.55; }
+.wc-map .india-line { fill: none; stroke: var(--india-line); stroke-width: 1.2; stroke-linejoin: round; }
 .wc-map .state { fill: none; stroke: var(--state-line); stroke-width: 0.8; stroke-dasharray: 3 3; }
 .wc-map .reg { font: 28px var(--font-display); letter-spacing: 0.3em; fill: var(--text); opacity: 0.16; }
 .wc-map .place { font: 10px var(--font-mono); fill: var(--muted); letter-spacing: 0.06em; }

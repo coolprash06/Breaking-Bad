@@ -32,5 +32,7 @@ Next.js 16.4 (App Router; read `node_modules/next/dist/docs/` before using Next 
 - Fonts via next/font: Bebas Neue (display), JetBrains Mono (labels + all numbers), Inter (body), Noto Sans Devanagari (Hindi).
 - Risk colours are fixed and never the theme green: Safe teal-cyan circle ✓, Watch yellow triangle !, Warning orange diamond !, Emergency red octagon ✕, No data grey dashed circle ?. Confidence = opacity / dashed ring + printed label ("~5 wk · 70%").
 - Map: `public/geo/*` (DataMeet SoI outline CC BY-SA 2.5/ODbL, SoI state lines CC BY 4.0, Natural Earth land); provenance in `public/geo/README.md`. No OSM/CARTO tiles. Globe (R3F, lazy, DPR <= 1.5, frameloop demand, slow-frame/WebGL-loss fallback to 2D) + flat MAP (SVG, d3-geo). Control box: GLOBE|MAP top-left, ZOOM IN/OUT/RESET bottom-right.
+- Navigation: globe zoom capped; past the cap / on clicking India or a source it flies on and hands off to the map (one continuous move). Map pan/zoom writes the DOM via refs (no React render per frame), zooms toward pointer/selected source, clusters close markers.
+- Data: 28 simulated sources; #19-#28 are Safe alternatives. Stepwell #6 (TH-06) is deliberately the one source with no suitable alternative.
 - Nearest safe source: haversine; herders only animal-capable, households only drinkable public types; honest "none within X km" message.
 - Themed labels always carry the plain meaning: "LAB READOUT · Source details". Warnings and numbers stay plain.

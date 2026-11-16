@@ -273,6 +273,131 @@ export const SOURCE_SPECS: SourceSpec[] = [
     hidden: { effAreaM2: 2500, rechargePerMm: 0.0008, evapFactor: 0, driftPerDay: -0.01, processSd: 0.004 },
     sensorSd: 0.01,
   },
+
+  // ---------------- SAFE ALTERNATIVES (added 16 Nov 2026) ----------------
+  // So every source except Stepwell #6 (Phalodi, kept isolated on purpose for the
+  // honest "no safe source nearby" case) has a suitable Safe alternative within
+  // each persona's distance limit. Separate random streams: existing data is unchanged.
+  {
+    // Alternative for Nadi #1: drinking, herds, bathing.
+    id: "TH-19", name: "Well #19", type: "dug_well", region: "thar", district: "jaisalmer",
+    placeLabel: "Village well beside Nadi #1, Jaisalmer", lat: 26.96, lon: 70.78,
+    capacityM: 10, failureLevelM: 0.5, animalCapable: true,
+    people: { households: 40, animals: 150, farms: 0 },
+    targetLevelAtDemo: 4.0,
+    baseUsage: { fetch: 40, spot: 150, pump: 0 },
+    hidden: { effAreaM2: 700, rechargePerMm: 0.004, evapFactor: 0.1, driftPerDay: 0.006, processSd: 0.0025 },
+    sensorSd: 0.008,
+    protectDemoWindow: true,
+  },
+  {
+    // Alternative for Tanka #2.
+    id: "TH-20", name: "Tanka #20", type: "tanka", region: "thar", district: "jaisalmer",
+    placeLabel: "Community tanka, Jaisalmer", lat: 26.88, lon: 70.94,
+    capacityM: 3.0, failureLevelM: 0.15, animalCapable: false,
+    people: { households: 8, animals: 0, farms: 0 },
+    targetLevelAtDemo: 2.5,
+    baseUsage: { fetch: 8, spot: 0, pump: 0 },
+    hidden: { effAreaM2: 90, rechargePerMm: 0.011, evapFactor: 0.05, driftPerDay: -0.0003, processSd: 0.0012 },
+    sensorSd: 0.006,
+    protectDemoWindow: true,
+  },
+  {
+    // Alternative for Beri #3.
+    id: "TH-21", name: "Tanka #21", type: "tanka", region: "thar", district: "jaisalmer",
+    placeLabel: "Tanka near the beri pits, Jaisalmer", lat: 27.0, lon: 70.72,
+    capacityM: 3.0, failureLevelM: 0.15, animalCapable: false,
+    people: { households: 8, animals: 0, farms: 0 },
+    targetLevelAtDemo: 2.5,
+    baseUsage: { fetch: 8, spot: 0, pump: 0 },
+    hidden: { effAreaM2: 90, rechargePerMm: 0.011, evapFactor: 0.05, driftPerDay: -0.0003, processSd: 0.0012 },
+    sensorSd: 0.006,
+    protectDemoWindow: true,
+  },
+  {
+    // Alternative for Nadi #9: drinking, herds, bathing.
+    id: "TH-22", name: "Well #22", type: "dug_well", region: "thar", district: "bikaner",
+    placeLabel: "Village well east of Nadi #9, Bikaner", lat: 27.975, lon: 73.425,
+    capacityM: 10, failureLevelM: 0.5, animalCapable: true,
+    people: { households: 50, animals: 200, farms: 0 },
+    targetLevelAtDemo: 4.3,
+    baseUsage: { fetch: 50, spot: 200, pump: 0 },
+    hidden: { effAreaM2: 700, rechargePerMm: 0.004, evapFactor: 0.1, driftPerDay: 0.006, processSd: 0.0025 },
+    sensorSd: 0.008,
+    protectDemoWindow: true,
+  },
+  {
+    // Drinking water for the village around Borewell #5.
+    id: "TH-23", name: "Tanka #23", type: "tanka", region: "thar", district: "barmer",
+    placeLabel: "Village tanka near Borewell #5, Barmer", lat: 25.72, lon: 71.48,
+    capacityM: 3.0, failureLevelM: 0.15, animalCapable: false,
+    people: { households: 10, animals: 0, farms: 0 },
+    targetLevelAtDemo: 2.5,
+    baseUsage: { fetch: 10, spot: 0, pump: 0 },
+    hidden: { effAreaM2: 90, rechargePerMm: 0.011, evapFactor: 0.05, driftPerDay: -0.0003, processSd: 0.0012 },
+    sensorSd: 0.006,
+    protectDemoWindow: true,
+  },
+  {
+    // Alternative for Nadi #10 and Virda #11.
+    id: "KU-24", name: "Well #24", type: "dug_well", region: "kutch", district: "banni",
+    placeLabel: "Village well between Nadi #10 and the virda pits, Banni", lat: 23.75, lon: 69.58,
+    capacityM: 10, failureLevelM: 0.5, animalCapable: true,
+    people: { households: 40, animals: 180, farms: 0 },
+    targetLevelAtDemo: 4.1,
+    baseUsage: { fetch: 40, spot: 180, pump: 0 },
+    hidden: { effAreaM2: 700, rechargePerMm: 0.004, evapFactor: 0.1, driftPerDay: 0.006, processSd: 0.0025 },
+    sensorSd: 0.008,
+    protectDemoWindow: true,
+  },
+  {
+    // Alternative for Lake #12 (on-spot use).
+    id: "KU-25", name: "Well #25", type: "dug_well", region: "kutch", district: "banni",
+    placeLabel: "Herders' well, north Banni", lat: 23.86, lon: 69.5,
+    capacityM: 10, failureLevelM: 0.5, animalCapable: true,
+    people: { households: 20, animals: 160, farms: 0 },
+    targetLevelAtDemo: 4.4,
+    baseUsage: { fetch: 20, spot: 160, pump: 0 },
+    hidden: { effAreaM2: 700, rechargePerMm: 0.004, evapFactor: 0.1, driftPerDay: 0.006, processSd: 0.0025 },
+    sensorSd: 0.008,
+    protectDemoWindow: true,
+  },
+  {
+    // Alternative for Tanka #15 and Well #16.
+    id: "KU-26", name: "Well #26", type: "dug_well", region: "kutch", district: "rapar",
+    placeLabel: "Village well west of Rapar", lat: 23.585, lon: 70.645,
+    capacityM: 10, failureLevelM: 0.5, animalCapable: true,
+    people: { households: 45, animals: 120, farms: 0 },
+    targetLevelAtDemo: 4.0,
+    baseUsage: { fetch: 45, spot: 120, pump: 0 },
+    hidden: { effAreaM2: 700, rechargePerMm: 0.004, evapFactor: 0.1, driftPerDay: 0.006, processSd: 0.0025 },
+    sensorSd: 0.008,
+    protectDemoWindow: true,
+  },
+  {
+    // Alternative for Stepwell #17 (herds, bathing).
+    id: "KU-27", name: "Well #27", type: "dug_well", region: "kutch", district: "bhuj",
+    placeLabel: "Village well east of Bhuj", lat: 23.22, lon: 69.69,
+    capacityM: 10, failureLevelM: 0.5, animalCapable: true,
+    people: { households: 35, animals: 140, farms: 0 },
+    targetLevelAtDemo: 4.2,
+    baseUsage: { fetch: 35, spot: 140, pump: 0 },
+    hidden: { effAreaM2: 700, rechargePerMm: 0.004, evapFactor: 0.1, driftPerDay: 0.006, processSd: 0.0025 },
+    sensorSd: 0.008,
+    protectDemoWindow: true,
+  },
+  {
+    // Drinking water near Borewell #18.
+    id: "KU-28", name: "Tanka #28", type: "tanka", region: "kutch", district: "lakhpat",
+    placeLabel: "Village tanka, Lakhpat", lat: 23.82, lon: 68.88,
+    capacityM: 3.0, failureLevelM: 0.15, animalCapable: false,
+    people: { households: 10, animals: 0, farms: 0 },
+    targetLevelAtDemo: 2.5,
+    baseUsage: { fetch: 10, spot: 0, pump: 0 },
+    hidden: { effAreaM2: 90, rechargePerMm: 0.011, evapFactor: 0.05, driftPerDay: -0.0003, processSd: 0.0012 },
+    sensorSd: 0.006,
+    protectDemoWindow: true,
+  },
 ];
 
 export const DEMO_DATE = DEMO;

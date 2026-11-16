@@ -37,6 +37,11 @@ export interface LearnedModel {
   nIntervals: number;
   nDaysCovered: number;
   nOutliers: number;
+  /**
+   * Reading indices the fit rejected as sensor glitches. A glitch spoils both
+   * intervals that touch it, so it is the reading shared by two rejected intervals.
+   */
+  glitchIdx: number[];
   residualSd: number;
   /** Day-to-day unexplained change (m/day), separated from sensor noise. */
   processSd: number;
@@ -170,6 +175,22 @@ function median(xs: number[]): number {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
+/** Readings shared by two rejected intervals; a lone rejected interval flags its end reading. */
+function findGlitches(rejected: Row[]): number[] {
+  const count = new Map<number, number>();
+  for (const r of rejected) {
+    for (const i of [r.endIdx - r.days, r.endIdx]) count.set(i, (count.get(i) ?? 0) + 1);
+  }
+  const out = new Set<number>();
+  for (const r of rejected) {
+    const a = r.endIdx - r.days;
+    if ((count.get(a) ?? 0) >= 2) out.add(a);
+    else if ((count.get(r.endIdx) ?? 0) >= 2) out.add(r.endIdx);
+    else out.add(r.endIdx);
+  }
+  return [...out].sort((x, y) => x - y);
+}
+
 const EMPTY: Record<ParamKey, number> = { recharge: 0, evap: 0, fetch: 0, spot: 0, pump: 0, drift: 0 };
 
 export function learnParameters(
@@ -188,7 +209,7 @@ export function learnParameters(
   if (rows.length < 12) {
     return {
       coef: { ...EMPTY }, se: { ...EMPTY }, notIdentified: [...PARAM_KEYS], r2: 0,
-      nIntervals: rows.length, nDaysCovered: 0, nOutliers: 0, residualSd: 0.05,
+      nIntervals: rows.length, nDaysCovered: 0, nOutliers: 0, glitchIdx: [], residualSd: 0.05,
       processSd: 0.01, sensorSd: 0.01, fitFrom: null, fitTo: null,
     };
   }
@@ -199,6 +220,7 @@ export function learnParameters(
   const madSd = 1.4826 * median(res0.map((r) => Math.abs(r - median(res0))));
   const keep = res0.map((r) => Math.abs(r) <= Math.max(5 * madSd, 1e-4));
   const nOutliers = keep.filter((k) => !k).length;
+  const glitchIdx = findGlitches(rows.filter((_, i) => !keep[i]));
   if (nOutliers > 0) {
     rows = rows.filter((_, i) => keep[i]);
     fit = constrainedRidge(rows, usable);
@@ -251,6 +273,7 @@ export function learnParameters(
     nIntervals: rows.length,
     nDaysCovered: rows.reduce((s, r) => s + r.days, 0),
     nOutliers,
+    glitchIdx,
     residualSd: Math.sqrt(sigma2),
     processSd: Math.sqrt(processVar),
     sensorSd: Math.sqrt(sensorVar),

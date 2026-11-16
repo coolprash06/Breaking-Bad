@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Area, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from "recharts";
 import { sourceTypeLabel } from "@/config/sourceTypes";
 import { DISTRICTS } from "@/config/regions";
 import { formatShort } from "@/lib/time";
@@ -12,7 +12,7 @@ import { RISK_UI, RiskPill, shortConfidence } from "@/components/map/RiskMarker"
 
 interface Detail {
   asOf: string;
-  history: { date: string; level: number | null }[];
+  history: { date: string; level: number | null; glitch?: boolean }[];
   forecast: { date: string; p10: number; p50: number; p90: number }[];
   status: { reasons: { text: string }[] };
   provenance: { readings: Provenance };
@@ -23,49 +23,84 @@ interface Detail {
 interface ChartRow {
   date: string;
   level?: number | null;
+  /** A reading the model rejected as a sensor glitch (drawn as an x, not in the line). */
+  glitch?: number | null;
   p50?: number;
   band?: [number, number];
 }
 
 const USE_LABEL = { fetch: "Fetch & carry", spot: "Use on spot", pump: "Pump at scale" } as const;
 
+/** Small "x" for a rejected reading. */
+function GlitchMark(props: { cx?: number; cy?: number; payload?: ChartRow }) {
+  const { cx, cy, payload } = props;
+  // Recharts calls the shape for every row; draw only real glitches.
+  if (payload?.glitch == null || cx === undefined || cy === undefined || !Number.isFinite(cy)) return <g />;
+  return (
+    <path
+      d={`M${cx - 3.5} ${cy - 3.5}L${cx + 3.5} ${cy + 3.5}M${cx + 3.5} ${cy - 3.5}L${cx - 3.5} ${cy + 3.5}`}
+      stroke="var(--risk-emergency)"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+    />
+  );
+}
+
 function LevelChart({ d, failure }: { d: Detail; failure: number }) {
   const hist = d.history.slice(-42);
   const rows: ChartRow[] = [
-    ...hist.map((h) => ({ date: h.date, level: h.level })),
+    ...hist.map((h) => (h.glitch ? { date: h.date, level: null, glitch: h.level } : { date: h.date, level: h.level })),
     ...d.forecast
       .filter((_, i) => i % 2 === 0 || i === d.forecast.length - 1)
       .slice(0, 46)
       .map((f) => ({ date: f.date, p50: f.p50, band: [f.p10, f.p90] as [number, number] })),
   ];
   // Join the forecast to the last reading so the line is continuous.
-  const last = [...hist].reverse().find((h) => h.level !== null);
+  const last = [...hist].reverse().find((h) => h.level !== null && !h.glitch);
   if (last) {
     const i = rows.findIndex((r) => r.date === last.date);
     if (i >= 0) rows[i] = { ...rows[i], p50: last.level as number, band: [last.level as number, last.level as number] };
   }
   const tick = { fontSize: 9, fill: "var(--muted)", fontFamily: "var(--font-mono)" };
+  const nGlitch = rows.filter((r) => r.glitch != null).length;
   return (
-    <div className="h-[150px] w-full" role="img" aria-label="Water level: last 6 weeks and forecast with P10 to P90 band">
+    <div className="w-full" role="img" aria-label="Water level: last 6 weeks and forecast with P10 to P90 band">
+      <div className="h-[150px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={rows} margin={{ top: 6, right: 6, bottom: 0, left: -22 }}>
-          <XAxis dataKey="date" tick={tick} tickFormatter={(v: string) => formatShort(v)} minTickGap={36} stroke="var(--line)" />
+        <ComposedChart data={rows} margin={{ top: 6, right: 18, bottom: 0, left: -22 }}>
+          <XAxis
+            dataKey="date"
+            tick={tick}
+            tickFormatter={(v: string) => formatShort(v)}
+            minTickGap={36}
+            padding={{ left: 4, right: 10 }}
+            interval="preserveStartEnd"
+            stroke="var(--line)"
+          />
           <YAxis tick={tick} stroke="var(--line)" domain={[0, "auto"]} tickFormatter={(v: number) => v.toFixed(1)} />
           <Tooltip
             contentStyle={{ background: "var(--panel)", border: "1px solid var(--line2)", fontFamily: "var(--font-mono)", fontSize: 11 }}
             labelFormatter={(v) => formatShort(String(v))}
             formatter={(v, name) => {
               if (Array.isArray(v)) return [`${Number(v[0]).toFixed(2)}–${Number(v[1]).toFixed(2)} m`, "P10–P90"];
+              if (name === "glitch") return [`${Number(v).toFixed(2)} m`, "Sensor glitch - ignored by the model"];
               return [`${Number(v).toFixed(2)} m`, name === "level" ? "Reading" : "Forecast (median)"];
             }}
           />
           <Area dataKey="band" stroke="none" fill="var(--risk-warning)" fillOpacity={0.18} isAnimationActive={false} />
           <Line dataKey="level" stroke="var(--text)" strokeWidth={1.6} dot={false} connectNulls={false} isAnimationActive={false} />
+          <Scatter dataKey="glitch" name="glitch" isAnimationActive={false} shape={GlitchMark} legendType="none" />
           <Line dataKey="p50" stroke="var(--risk-warning)" strokeWidth={1.6} strokeDasharray="4 3" dot={false} isAnimationActive={false} />
           <ReferenceLine y={failure} stroke="var(--risk-emergency)" strokeDasharray="3 3" label={{ value: "fails", position: "insideBottomLeft", fontSize: 9, fill: "var(--risk-emergency)" }} />
           <ReferenceLine x={d.asOf} stroke="var(--lab)" label={{ value: "TODAY", position: "insideTopRight", fontSize: 9, fill: "var(--lab)" }} />
         </ComposedChart>
       </ResponsiveContainer>
+      </div>
+      {nGlitch > 0 && (
+        <p className="mt-0.5 font-mono text-[10px] text-muted">
+          <span className="text-risk-emergency">×</span> {nGlitch === 1 ? "1 reading" : `${nGlitch} readings`} ignored by the model as sensor glitches
+        </p>
+      )}
     </div>
   );
 }
